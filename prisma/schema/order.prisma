@@ -1,0 +1,25 @@
+model Order {
+    id               Int             @id @default(autoincrement())
+    items            String[]
+    total_amount     Float
+    delivery_address String
+    payment_method   String          @default("Cash on delivery(COD)")
+    status           OrderStatus     @default(PENDING)
+    user_id          Int
+    user             User            @relation(fields: [user_id], references: [id])
+    provider_id      Int
+    provider         ProviderProfile @relation(fields: [provider_id], references: [id])
+    createdAt        DateTime        @default(now())
+    updatedAt        DateTime        @updatedAt
+
+    @@map("orders")
+}
+
+enum OrderStatus {
+    PENDING
+    ACCEPTED
+    PREPARING
+    OUTFORDELIVERY
+    DELIVERED
+    CANCELLED
+}

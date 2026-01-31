@@ -1,0 +1,11 @@
+model Review {
+    id      Int    @id @default(autoincrement())
+    rating  Int
+    comment String
+    meal_id Int
+    meal    Meal  @relation(fields: [meal_id], references: [id])
+    user_id Int
+    user    User   @relation(fields: [user_id], references: [id])
+
+    @@map("reviews")
+}
