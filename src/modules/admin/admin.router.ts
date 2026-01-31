@@ -7,4 +7,6 @@ const router = Router();
 
 router.get("/users", auth(UserRole.ADMIN), adminController.getAllUser);
 
+router.patch("/users/:id", auth(UserRole.ADMIN), adminController.updateUserStatus);
+
 export const adminRouter = router;
