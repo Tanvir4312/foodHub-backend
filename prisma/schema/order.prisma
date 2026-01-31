@@ -1,13 +1,13 @@
 model Order {
-    id               Int             @id @default(autoincrement())
+   id        String        @id @default(uuid())
     items            String[]
     total_amount     Float
     delivery_address String
     payment_method   String          @default("Cash on delivery(COD)")
     status           OrderStatus     @default(PENDING)
-    user_id          Int
+    user_id          String
     user             User            @relation(fields: [user_id], references: [id])
-    provider_id      Int
+    provider_id      String
     provider         ProviderProfile @relation(fields: [provider_id], references: [id])
     createdAt        DateTime        @default(now())
     updatedAt        DateTime        @updatedAt

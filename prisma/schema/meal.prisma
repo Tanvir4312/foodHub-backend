@@ -1,13 +1,13 @@
 model Meal {
-    id          Int             @id @default(autoincrement())
+    id        String        @id @default(uuid())
     name        String          @db.VarChar(50)
     description String
     price       Float
     image_url   String?
     isAvailable Boolean         @default(true)
-    provider_id Int
+    provider_id String
     provider    ProviderProfile @relation(fields: [provider_id], references: [id])
-    category_id Int
+    category_id String
     categories  Category        @relation(fields: [category_id], references: [id])
     reviews     Review[]
 

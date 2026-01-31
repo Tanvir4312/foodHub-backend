@@ -1,18 +1,21 @@
 model User {
-    id           Int        @id @default(autoincrement())
-    name         String     @db.VarChar(50)
-    email        String     @unique
-    password     String
-    phone_number String     @db.VarChar(15)
-    role         UserRole   @default(CUSTOMER)
-    status       UserStatus @default(ACTIVE)
-    createdAt    DateTime   @default(now())
-    updatedAt    DateTime   @updatedAt
-
+    id              String           @id
+    name            String
+    email           String
+    emailVerified   Boolean          @default(false)
+    phone_number    String?          @db.VarChar(15)
+    image           String?
+    role            UserRole         @default(CUSTOMER)
+    status          UserStatus       @default(ACTIVE)
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    sessions        Session[]
+    accounts        Account[]
     providerProfile ProviderProfile?
     orders          Order[]
     reviews         Review[]
 
+    @@unique([email])
     @@map("users")
 }
 
@@ -25,4 +28,52 @@ enum UserRole {
 enum UserStatus {
     ACTIVE
     SUSPENDED
+}
+
+model Session {
+    id        String   @id
+    expiresAt DateTime
+    token     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    ipAddress String?
+    userAgent String?
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([token])
+    @@index([userId])
+    @@map("session")
+}
+
+model Account {
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+
+    @@index([userId])
+    @@map("account")
+}
+
+model Verification {
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    @@index([identifier])
+    @@map("verification")
 }
