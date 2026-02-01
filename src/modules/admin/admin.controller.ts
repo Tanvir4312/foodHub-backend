@@ -42,13 +42,26 @@ const createCategories = async (req: Request, res: Response) => {
   }
 };
 
+
 const getAllCategory = async (req: Request, res: Response) => {
+    
+    try {
+        const result = await adminServices.getAllCategory();
+        res.status(200).json(result);
+    } catch (e) {
+        console.error(e);
+    }
+};
+const updateCategories = async (req: Request, res: Response, next : NextFunction) => {
+    const id = req.params.id
+    const data= req.body
+   
    
   try {
-    const result = await adminServices.getAllCategory();
+    const result = await adminServices.updateCategory(id as string, data);
     res.status(200).json(result);
   } catch (e) {
-    console.error(e);
+   next(e);
   }
 };
 
@@ -56,5 +69,6 @@ export const adminController = {
   getAllUser,
   updateUserStatus,
   createCategories,
-  getAllCategory
+  getAllCategory,
+  updateCategories
 };

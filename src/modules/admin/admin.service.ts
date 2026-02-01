@@ -36,18 +36,29 @@ const createCategories = async (category: categoryType) => {
   return createCategory;
 };
 
-const getAllCategory = async () =>{
-    const allCategory = await prisma.category.findMany({
-        include : {
-            meals : true
-        }
-    })
-    return allCategory
-}
+const getAllCategory = async () => {
+  const allCategory = await prisma.category.findMany({
+    include: {
+      meals: true,
+    },
+  });
+  return allCategory;
+};
+
+const updateCategory = async (id: string, data: categoryType) => {
+  const updateCategory = await prisma.category.update({
+    where: {
+      id,
+    },
+    data,
+  });
+  return updateCategory
+};
 
 export const adminServices = {
   getAllUser,
   updateUserStatus,
   createCategories,
-  getAllCategory
+  getAllCategory,
+  updateCategory,
 };
