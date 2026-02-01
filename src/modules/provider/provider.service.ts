@@ -20,26 +20,26 @@ const getAllProvider = async () => {
   return await prisma.providerProfile.findMany({
     include: {
       meals: {
-        where : {
-            isAvailable : true
-        }
+        where: {
+          isAvailable: true,
+        },
       },
     },
   });
 };
 
-const getProviderById = async (id : string) => {
+const getProviderById = async (id: string) => {
   return await prisma.providerProfile.findUniqueOrThrow({
-   where : {
-    id
-   },
-   include : {
-    meals : {
-        where : {
-            isAvailable : true
-        }
-    }
-   }
+    where: {
+      id,
+    },
+    include: {
+      meals: {
+        where: {
+          isAvailable: true,
+        },
+      },
+    },
   });
 };
 
@@ -66,6 +66,14 @@ const getAllMeal = async (isAvailable: boolean) => {
   });
   const totalMeal = await prisma.meal.count();
   return { data: result, totalMeal };
+};
+
+const getMealsById = async (id: string) => {
+  return await prisma.meal.findUniqueOrThrow({
+    where: {
+      id,
+    },
+  });
 };
 
 const createMeals = async (payload: {
@@ -116,6 +124,7 @@ export const providerServices = {
   getAllProvider,
   getProviderById,
   getAllMeal,
+  getMealsById,
   createMeals,
   updateMeals,
   deleteMeals,

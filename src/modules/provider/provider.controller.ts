@@ -22,8 +22,8 @@ const createProviderProfile = async (
     next(e);
   }
 };
-const getAllProvider = async (req : Request, res : Response) =>{
-    try {
+const getAllProvider = async (req: Request, res: Response) => {
+  try {
     const allProvider = await providerServices.getAllProvider();
     res.status(200).json(allProvider);
   } catch (e) {
@@ -32,12 +32,14 @@ const getAllProvider = async (req : Request, res : Response) =>{
       error: e,
     });
   }
-}
+};
 
-const getProviderById = async (req : Request, res : Response) =>{
-    const id = req.params.id
-    try {
-    const getSpecificProvider = await providerServices.getProviderById(id as string);
+const getProviderById = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  try {
+    const getSpecificProvider = await providerServices.getProviderById(
+      id as string,
+    );
     res.status(200).json(getSpecificProvider);
   } catch (e) {
     res.status(404).json({
@@ -45,7 +47,7 @@ const getProviderById = async (req : Request, res : Response) =>{
       error: e,
     });
   }
-}
+};
 // -------Meals------------
 const getAllMeal = async (req: Request, res: Response) => {
   const isAvailable = req.query.isAvailable
@@ -57,8 +59,26 @@ const getAllMeal = async (req: Request, res: Response) => {
     : undefined;
 
   try {
-    const mealsCreate = await providerServices.getAllMeal(isAvailable as boolean);
+    const mealsCreate = await providerServices.getAllMeal(
+      isAvailable as boolean,
+    );
     res.status(200).json(mealsCreate);
+  } catch (e) {
+    res.status(404).json({
+      message: "Meal not found",
+      error: e,
+    });
+  }
+};
+
+const getMealsById = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  console.log(id)
+  try {
+    const mealDetails = await providerServices.getMealsById(
+     id as string
+    );
+    res.status(200).json(mealDetails);
   } catch (e) {
     res.status(404).json({
       message: "Meal not found",
@@ -105,6 +125,7 @@ export const providerController = {
   getAllProvider,
   getProviderById,
   getAllMeal,
+  getMealsById,
   createMeals,
   updateMeals,
   deleteMeals,

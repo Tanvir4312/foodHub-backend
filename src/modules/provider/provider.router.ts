@@ -20,6 +20,8 @@ router.post(
 // -----Meals--------
 router.get("/meals",  providerController.getAllMeal);
 
+router.get("/meals/:id",  providerController.getMealsById);
+
 router.post("/meals", auth(UserRole.PROVIDER), providerController.createMeals);
 
 router.put("/meals/:id", auth(UserRole.PROVIDER), providerController.updateMeals);
