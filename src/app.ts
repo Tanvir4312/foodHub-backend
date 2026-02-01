@@ -3,6 +3,7 @@ import express, { Application } from "express";
 import { auth } from "./lib/auth";
 import cors from "cors";
 import { adminRouter } from "./modules/admin/admin.router";
+import errorHandler from "./middleware/globalErrorHandler";
 
 const app: Application = express();
 
@@ -15,11 +16,14 @@ app.use(
 
 app.use(express.json())
 
+
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 // Admin
 app.use("/admin", adminRouter)
 
+// Error Handler
+app.use(errorHandler)
 
 
 app.get("/", async (req, res) => {
