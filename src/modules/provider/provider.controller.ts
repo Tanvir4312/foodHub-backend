@@ -21,7 +21,18 @@ const createProviderProfile = async (
     next(e);
   }
 };
+// -------Meals------------
+const createMeals = async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.body)
+  try {
+    const providerProfileCreate = await providerServices.createMeals(req.body);
+    res.status(200).json(providerProfileCreate);
+  } catch (e) {
+    next(e);
+  }
+};
 
 export const providerController = {
   createProviderProfile,
+  createMeals,
 };
