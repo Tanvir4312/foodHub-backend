@@ -15,6 +15,12 @@ function errorHandler(
     if (err.code === "P2025") {
       ((statusCode = 404), (errorMessage = "User not found"));
     }
+    if (err.code === "P2002") {
+      ((statusCode = 404), (errorMessage = "duplicate"));
+    }
+  }
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    ((statusCode = 400), (errorMessage = "creation failed"));
   }
 
   res.status(500);

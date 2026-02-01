@@ -88,6 +88,7 @@ const deleteCategories = async (
 };
 
 const getAllOrder = async (req: Request, res: Response) => {
+    
   const id = req.params.id;
 
   try {

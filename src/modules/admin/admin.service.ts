@@ -1,7 +1,8 @@
-import { NextFunction } from "express";
+
 import { UserStatus } from "../../enum/userStatus";
 import { prisma } from "../../lib/prisma";
-import { categoryType } from "../../types/categoryType";
+import { Category } from "../../../generated/prisma/client";
+
 
 const getAllUser = async () => {
   const allUser = await prisma.user.findMany({
@@ -21,7 +22,7 @@ const updateUserStatus = async (id: string, status: UserStatus) => {
 };
 
 // ------------Categories-------------
-const createCategories = async (category: categoryType) => {
+const createCategories = async (category: Category) => {
   const existingCategory = await prisma.category.findUnique({
     where: { name: category.name },
   });
@@ -46,7 +47,7 @@ const getAllCategory = async () => {
   return { allCategory, totalCategory };
 };
 
-const updateCategory = async (id: string, data: categoryType) => {
+const updateCategory = async (id: string, data: Category) => {
   const categoryUpdate = await prisma.category.update({
     where: {
       id,
