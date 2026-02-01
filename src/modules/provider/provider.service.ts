@@ -19,14 +19,15 @@ const getAllMeal = async () => {
   const result = await prisma.meal.findMany({
     include: {
       categories: {
-        select : {
-            name : true,
-            description : true
-        }
-      }
+        select: {
+          name: true,
+          description: true,
+        },
+      },
     },
   });
-  return result;
+  const totalMeal = await prisma.meal.count();
+  return {data: result, totalMeal };
 };
 
 const createMeals = async (payload: {
@@ -63,9 +64,19 @@ const updateMeals = async (mealsData: Meal, id: string) => {
   return result;
 };
 
+const deleteMeals = async (id: string) => {
+  const result = await prisma.meal.delete({
+    where: {
+      id,
+    },
+  });
+  return result;
+};
+
 export const providerServices = {
   createProviderProfile,
   getAllMeal,
   createMeals,
   updateMeals,
+  deleteMeals,
 };

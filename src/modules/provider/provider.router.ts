@@ -18,4 +18,10 @@ router.post("/meals", auth(UserRole.PROVIDER), providerController.createMeals);
 
 router.put("/meals/:id", auth(UserRole.PROVIDER), providerController.updateMeals);
 
+router.delete("/meals/:id", auth(UserRole.PROVIDER), providerController.deleteMeals);
+
+// ----------Orders------------
+// TODO :View incoming orders
+// TODO : Provider can change order status
+
 export const providerRouter = router;

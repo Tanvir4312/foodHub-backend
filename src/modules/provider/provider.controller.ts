@@ -55,9 +55,21 @@ const updateMeals = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const deleteMeals = async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id
+   
+  try {
+    const mealsDelete = await providerServices.deleteMeals(id as string);
+    res.status(200).json(mealsDelete);
+  } catch (e) {
+    next(e);
+  }
+};
+
 export const providerController = {
   createProviderProfile,
   getAllMeal,
   createMeals,
-  updateMeals
+  updateMeals,
+  deleteMeals
 };

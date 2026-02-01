@@ -1,8 +1,6 @@
-
 import { UserStatus } from "../../enum/userStatus";
 import { prisma } from "../../lib/prisma";
 import { Category } from "../../../generated/prisma/client";
-
 
 const getAllUser = async () => {
   const allUser = await prisma.user.findMany({
@@ -44,7 +42,7 @@ const getAllCategory = async () => {
     },
   });
   const totalCategory = await prisma.category.count();
-  return { allCategory, totalCategory };
+  return { data: allCategory, totalCategory };
 };
 
 const updateCategory = async (id: string, data: Category) => {
@@ -66,7 +64,6 @@ const deleteCategory = async (id: string) => {
   return categoryDelete;
 };
 
-
 // ----------Orders-----------
 const getAllOrder = async () => {
   const allUser = await prisma.order.findMany({
@@ -77,7 +74,6 @@ const getAllOrder = async () => {
   return allUser;
 };
 
-
 export const adminServices = {
   getAllUser,
   updateUserStatus,
@@ -85,5 +81,5 @@ export const adminServices = {
   getAllCategory,
   updateCategory,
   deleteCategory,
-  getAllOrder
+  getAllOrder,
 };
