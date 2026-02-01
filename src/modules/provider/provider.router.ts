@@ -6,12 +6,16 @@ import { UserRole } from "../../../generated/prisma/enums";
 
 const router = Router();
 
+// ---Provider-----
+router.get("/providers", providerController.getAllProvider)
+
 router.post(
   "/provider-profile",
   auth(UserRole.PROVIDER),
   providerController.createProviderProfile,
 );
 
+// -----Meals--------
 router.get("/meals",  providerController.getAllMeal);
 
 router.post("/meals", auth(UserRole.PROVIDER), providerController.createMeals);

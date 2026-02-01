@@ -1,6 +1,8 @@
 import { Meal, ProviderProfile } from "../../../generated/prisma/client";
+import { MealWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
+// ------Provider-------
 const createProviderProfile = async (
   data: Omit<ProviderProfile, "user_id">,
   id: string,
@@ -14,9 +16,30 @@ const createProviderProfile = async (
   return result;
 };
 
+const getAllProvider = async () => {
+  return await prisma.providerProfile.findMany({
+    include: {
+      meals: {
+        where : {
+            isAvailable : true
+        }
+      },
+    },
+  });
+};
+
 // ------Meals-------------
-const getAllMeal = async () => {
+const getAllMeal = async (isAvailable: boolean) => {
+  const andCondition: MealWhereInput[] = [];
+
+  if (typeof isAvailable === "boolean") {
+    andCondition.push({ isAvailable });
+  }
+
   const result = await prisma.meal.findMany({
+    where: {
+      AND: andCondition,
+    },
     include: {
       categories: {
         select: {
@@ -27,7 +50,7 @@ const getAllMeal = async () => {
     },
   });
   const totalMeal = await prisma.meal.count();
-  return {data: result, totalMeal };
+  return { data: result, totalMeal };
 };
 
 const createMeals = async (payload: {
@@ -75,6 +98,7 @@ const deleteMeals = async (id: string) => {
 
 export const providerServices = {
   createProviderProfile,
+  getAllProvider,
   getAllMeal,
   createMeals,
   updateMeals,
