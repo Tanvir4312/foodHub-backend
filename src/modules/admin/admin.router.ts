@@ -15,5 +15,7 @@ router.post("/categories", auth(UserRole.ADMIN), adminController.createCategorie
 
 router.patch("/categories/:id", auth(UserRole.ADMIN), adminController.updateCategories);
 
+router.delete("/categories/:id", auth(UserRole.ADMIN), adminController.deleteCategories);
+
 
 export const adminRouter = router;

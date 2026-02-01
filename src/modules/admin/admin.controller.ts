@@ -65,10 +65,24 @@ const updateCategories = async (req: Request, res: Response, next : NextFunction
   }
 };
 
+const deleteCategories = async (req: Request, res: Response, next : NextFunction) => {
+    const id = req.params.id
+  
+   
+   
+  try {
+    const result = await adminServices.deleteCategory(id as string);
+    res.status(200).json(result);
+  } catch (e) {
+   next(e);
+  }
+};
+
 export const adminController = {
   getAllUser,
   updateUserStatus,
   createCategories,
   getAllCategory,
-  updateCategories
+  updateCategories,
+  deleteCategories
 };

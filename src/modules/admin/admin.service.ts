@@ -27,7 +27,7 @@ const createCategories = async (category: categoryType) => {
   });
 
   if (existingCategory) {
-    throw new Error("Duplicate error");
+    throw new Error("This category name already exists");
   }
 
   const createCategory = await prisma.category.create({
@@ -46,13 +46,22 @@ const getAllCategory = async () => {
 };
 
 const updateCategory = async (id: string, data: categoryType) => {
-  const updateCategory = await prisma.category.update({
+  const categoryUpdate = await prisma.category.update({
     where: {
       id,
     },
     data,
   });
-  return updateCategory
+  return categoryUpdate;
+};
+
+const deleteCategory = async (id: string) => {
+  const categoryDelete = await prisma.category.delete({
+    where: {
+      id,
+    },
+  });
+  return categoryDelete;
 };
 
 export const adminServices = {
@@ -61,4 +70,5 @@ export const adminServices = {
   createCategories,
   getAllCategory,
   updateCategory,
+  deleteCategory,
 };
