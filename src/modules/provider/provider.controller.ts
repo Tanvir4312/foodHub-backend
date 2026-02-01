@@ -22,11 +22,34 @@ const createProviderProfile = async (
   }
 };
 // -------Meals------------
-const createMeals = async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body)
+const getAllMeal = async (req: Request, res: Response) => {
+
   try {
-    const providerProfileCreate = await providerServices.createMeals(req.body);
-    res.status(200).json(providerProfileCreate);
+    const mealsCreate = await providerServices.getAllMeal();
+    res.status(200).json(mealsCreate);
+  } catch (e) {
+   res.status(404).json({
+    message : "Meal not found",
+    error : e
+   })
+  }
+};
+const createMeals = async (req: Request, res: Response, next: NextFunction) => {
+
+  try {
+    const mealsCreate = await providerServices.createMeals(req.body);
+    res.status(200).json(mealsCreate);
+  } catch (e) {
+    next(e);
+  }
+};
+
+const updateMeals = async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id
+   
+  try {
+    const mealsUpdate = await providerServices.updateMeals(req.body, id as string);
+    res.status(200).json(mealsUpdate);
   } catch (e) {
     next(e);
   }
@@ -34,5 +57,7 @@ const createMeals = async (req: Request, res: Response, next: NextFunction) => {
 
 export const providerController = {
   createProviderProfile,
+  getAllMeal,
   createMeals,
+  updateMeals
 };

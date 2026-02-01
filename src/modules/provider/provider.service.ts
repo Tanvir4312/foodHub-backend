@@ -15,6 +15,19 @@ const createProviderProfile = async (
 };
 
 // ------Meals-------------
+const getAllMeal = async () => {
+  const result = await prisma.meal.findMany({
+    include: {
+      categories: {
+        select : {
+            name : true,
+            description : true
+        }
+      }
+    },
+  });
+  return result;
+};
 
 const createMeals = async (payload: {
   name: string;
@@ -40,7 +53,19 @@ const createMeals = async (payload: {
   return result;
 };
 
+const updateMeals = async (mealsData: Meal, id: string) => {
+  const result = await prisma.meal.update({
+    where: {
+      id,
+    },
+    data: mealsData,
+  });
+  return result;
+};
+
 export const providerServices = {
   createProviderProfile,
+  getAllMeal,
   createMeals,
+  updateMeals,
 };
