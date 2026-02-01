@@ -42,8 +42,19 @@ const createCategories = async (req: Request, res: Response) => {
   }
 };
 
+const getAllCategory = async (req: Request, res: Response) => {
+   
+  try {
+    const result = await adminServices.getAllCategory();
+    res.status(200).json(result);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 export const adminController = {
   getAllUser,
   updateUserStatus,
   createCategories,
+  getAllCategory
 };

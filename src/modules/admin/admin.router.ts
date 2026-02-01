@@ -4,11 +4,14 @@ import auth from "../../middleware/auth_middleware";
 import { UserRole } from "../../enum/userRole";
 
 const router = Router();
-
+// Users
 router.get("/users", auth(UserRole.ADMIN), adminController.getAllUser);
+
+router.patch("/users/:id", auth(UserRole.ADMIN), adminController.updateUserStatus);
+// --------Categories----------------
+router.get("/categories", auth(UserRole.ADMIN), adminController.getAllCategory);
 
 router.post("/categories", auth(UserRole.ADMIN), adminController.createCategories);
 
-router.patch("/users/:id", auth(UserRole.ADMIN), adminController.updateUserStatus);
 
 export const adminRouter = router;
