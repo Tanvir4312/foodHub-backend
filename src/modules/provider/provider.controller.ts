@@ -24,8 +24,21 @@ const createProviderProfile = async (
 };
 const getAllProvider = async (req : Request, res : Response) =>{
     try {
-    const mealsCreate = await providerServices.getAllProvider();
-    res.status(200).json(mealsCreate);
+    const allProvider = await providerServices.getAllProvider();
+    res.status(200).json(allProvider);
+  } catch (e) {
+    res.status(404).json({
+      message: "Provider not found",
+      error: e,
+    });
+  }
+}
+
+const getProviderById = async (req : Request, res : Response) =>{
+    const id = req.params.id
+    try {
+    const getSpecificProvider = await providerServices.getProviderById(id as string);
+    res.status(200).json(getSpecificProvider);
   } catch (e) {
     res.status(404).json({
       message: "Provider not found",
@@ -90,6 +103,7 @@ const deleteMeals = async (req: Request, res: Response, next: NextFunction) => {
 export const providerController = {
   createProviderProfile,
   getAllProvider,
+  getProviderById,
   getAllMeal,
   createMeals,
   updateMeals,

@@ -9,6 +9,8 @@ const router = Router();
 // ---Provider-----
 router.get("/providers", providerController.getAllProvider)
 
+router.get("/providers/:id", providerController.getProviderById)
+
 router.post(
   "/provider-profile",
   auth(UserRole.PROVIDER),

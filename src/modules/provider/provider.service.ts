@@ -28,6 +28,21 @@ const getAllProvider = async () => {
   });
 };
 
+const getProviderById = async (id : string) => {
+  return await prisma.providerProfile.findUniqueOrThrow({
+   where : {
+    id
+   },
+   include : {
+    meals : {
+        where : {
+            isAvailable : true
+        }
+    }
+   }
+  });
+};
+
 // ------Meals-------------
 const getAllMeal = async (isAvailable: boolean) => {
   const andCondition: MealWhereInput[] = [];
@@ -99,6 +114,7 @@ const deleteMeals = async (id: string) => {
 export const providerServices = {
   createProviderProfile,
   getAllProvider,
+  getProviderById,
   getAllMeal,
   createMeals,
   updateMeals,
