@@ -17,5 +17,7 @@ router.patch("/categories/:id", auth(UserRole.ADMIN), adminController.updateCate
 
 router.delete("/categories/:id", auth(UserRole.ADMIN), adminController.deleteCategories);
 
+// -----Orders------
+router.get("/orders", auth(UserRole.ADMIN), adminController.getAllOrder);
 
 export const adminRouter = router;

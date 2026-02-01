@@ -42,7 +42,8 @@ const getAllCategory = async () => {
       meals: true,
     },
   });
-  return allCategory;
+  const totalCategory = await prisma.category.count();
+  return { allCategory, totalCategory };
 };
 
 const updateCategory = async (id: string, data: categoryType) => {
@@ -64,6 +65,18 @@ const deleteCategory = async (id: string) => {
   return categoryDelete;
 };
 
+
+// ----------Orders-----------
+const getAllOrder = async () => {
+  const allUser = await prisma.order.findMany({
+    include: {
+      provider: true,
+    },
+  });
+  return allUser;
+};
+
+
 export const adminServices = {
   getAllUser,
   updateUserStatus,
@@ -71,4 +84,5 @@ export const adminServices = {
   getAllCategory,
   updateCategory,
   deleteCategory,
+  getAllOrder
 };
