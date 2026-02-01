@@ -20,7 +20,7 @@ app.use(express.json())
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 // Admin
-app.use("/admin", adminRouter)
+app.use("/api/admin", adminRouter)
 
 // Error Handler
 app.use(errorHandler)

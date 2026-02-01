@@ -5,7 +5,9 @@ const getAllUser = async (req: Request, res: Response) => {
   try {
     const result = await adminServices.getAllUser();
     res.status(200).json(result);
-  } catch (err) {}
+  } catch (err) {
+    console.error(err)
+  }
 };
 const updateUserStatus = async (
   req: Request,
@@ -29,7 +31,19 @@ const updateUserStatus = async (
   }
 };
 
+// ----------Categories-----------
+const createCategories = async (req: Request, res: Response) => {
+   
+  try {
+    const result = await adminServices.createCategories(req.body);
+    res.status(200).json(result);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 export const adminController = {
   getAllUser,
   updateUserStatus,
+  createCategories,
 };
