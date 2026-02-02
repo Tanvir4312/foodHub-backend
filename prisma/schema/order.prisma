@@ -1,6 +1,5 @@
 model Order {
-   id        String        @id @default(uuid())
-    items            String[]
+    id               String          @id @default(uuid())
     total_amount     Float
     delivery_address String
     payment_method   String          @default("Cash on delivery(COD)")
@@ -11,9 +10,12 @@ model Order {
     provider         ProviderProfile @relation(fields: [provider_id], references: [id])
     createdAt        DateTime        @default(now())
     updatedAt        DateTime        @updatedAt
+    orderItems       orderItem[]
 
     @@map("orders")
 }
+
+
 
 enum OrderStatus {
     PENDING
