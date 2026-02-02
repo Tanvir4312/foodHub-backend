@@ -13,7 +13,7 @@ function errorHandler(
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {
-      ((statusCode = 404), (errorMessage = "User not found"));
+      ((statusCode = 404), (errorMessage = "not found"));
     }
     if (err.code === "P2002") {
       ((statusCode = 404), (errorMessage = "duplicate"));

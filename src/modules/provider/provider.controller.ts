@@ -50,17 +50,18 @@ const getProviderById = async (req: Request, res: Response) => {
 };
 // -------Meals------------
 const getAllMeal = async (req: Request, res: Response) => {
-  const isAvailable = req.query.isAvailable
-    ? req.query.isAvailable === "true"
-      ? true
-      : req.query.isAvailable === "false"
-        ? false
-        : undefined
-    : undefined;
+  const search = req.query.search;
+  const minPriceStr = req.query.minPrice;
+  const maxPriceStr = req.query.maxPrice;
+
+  const minPrice = Number(minPriceStr);
+  const maxPrice = Number(maxPriceStr);
 
   try {
     const mealsCreate = await providerServices.getAllMeal(
-      isAvailable as boolean,
+      search as string,
+      minPrice as number,
+      maxPrice as number,
     );
     res.status(200).json(mealsCreate);
   } catch (e) {
@@ -73,11 +74,9 @@ const getAllMeal = async (req: Request, res: Response) => {
 
 const getMealsById = async (req: Request, res: Response) => {
   const id = req.params.id;
-  console.log(id)
+  console.log(id);
   try {
-    const mealDetails = await providerServices.getMealsById(
-     id as string
-    );
+    const mealDetails = await providerServices.getMealsById(id as string);
     res.status(200).json(mealDetails);
   } catch (e) {
     res.status(404).json({

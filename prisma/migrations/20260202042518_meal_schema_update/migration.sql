@@ -12,7 +12,7 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "emailVerified" BOOLEAN NOT NULL DEFAULT true,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "phone_number" VARCHAR(15),
     "image" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'CUSTOMER',
@@ -72,7 +72,7 @@ CREATE TABLE "verification" (
 CREATE TABLE "categories" (
     "id" TEXT NOT NULL,
     "name" VARCHAR(50) NOT NULL,
-    "description" TEXT NOT NULL,
+    "description" TEXT,
 
     CONSTRAINT "categories_pkey" PRIMARY KEY ("id")
 );
@@ -85,6 +85,7 @@ CREATE TABLE "meals" (
     "price" DOUBLE PRECISION NOT NULL,
     "image_url" TEXT,
     "isAvailable" BOOLEAN NOT NULL DEFAULT true,
+    "dietary" TEXT NOT NULL,
     "provider_id" TEXT NOT NULL,
     "category_id" TEXT NOT NULL,
 
@@ -145,6 +146,9 @@ CREATE INDEX "account_userId_idx" ON "account"("userId");
 
 -- CreateIndex
 CREATE INDEX "verification_identifier_idx" ON "verification"("identifier");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "providersProfile_user_id_key" ON "providersProfile"("user_id");

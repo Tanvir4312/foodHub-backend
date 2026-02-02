@@ -1,4 +1,8 @@
-import { Meal, ProviderProfile } from "../../../generated/prisma/client";
+import {
+  DietaryPreference,
+  Meal,
+  ProviderProfile,
+} from "../../../generated/prisma/client";
 import { MealWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
@@ -20,8 +24,12 @@ const getAllProvider = async () => {
   return await prisma.providerProfile.findMany({
     include: {
       meals: {
-        where: {
-          isAvailable: true,
+        include: {
+          categories: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
@@ -35,8 +43,12 @@ const getProviderById = async (id: string) => {
     },
     include: {
       meals: {
-        where: {
-          isAvailable: true,
+        include: {
+          categories: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
@@ -44,17 +56,53 @@ const getProviderById = async (id: string) => {
 };
 
 // ------Meals-------------
-const getAllMeal = async (isAvailable: boolean) => {
+const getAllMeal = async (
+
+  search: string,
+  minPrice: number,
+  maxPrice: number,
+) => {
   const andCondition: MealWhereInput[] = [];
 
-  if (typeof isAvailable === "boolean") {
-    andCondition.push({ isAvailable });
+
+  if (search) {
+    andCondition.push({
+      OR: [
+        {
+          categories: {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  if (minPrice || maxPrice) {
+    andCondition.push({
+      price: {
+        ...(minPrice && { gte: minPrice }),
+        ...(maxPrice && { lte: maxPrice }),
+      },
+    });
   }
 
   const result = await prisma.meal.findMany({
-    where: {
-      AND: andCondition,
-    },
+    where:
+      andCondition.length > 0
+        ? {
+            AND: [...andCondition, { isAvailable: true }],
+          }
+        : {isAvailable: true},
+
     include: {
       categories: {
         select: {
@@ -64,14 +112,21 @@ const getAllMeal = async (isAvailable: boolean) => {
       },
     },
   });
-  const totalMeal = await prisma.meal.count();
-  return { data: result, totalMeal };
+
+  return result;
 };
 
 const getMealsById = async (id: string) => {
   return await prisma.meal.findUniqueOrThrow({
     where: {
       id,
+    },
+    include: {
+      categories: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 };
@@ -80,6 +135,7 @@ const createMeals = async (payload: {
   name: string;
   description: string;
   price: number;
+  dietary: DietaryPreference;
   image_url?: string;
   provider_id: string;
   category_id: string;

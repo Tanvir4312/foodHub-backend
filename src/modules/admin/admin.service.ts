@@ -1,6 +1,7 @@
-import { UserStatus } from "../../enum/userStatus";
+
 import { prisma } from "../../lib/prisma";
-import { Category } from "../../../generated/prisma/client";
+import { Category, UserStatus } from "../../../generated/prisma/client";
+// import { UserStatus } from "../../enum/userStatus";
 
 const getAllUser = async () => {
   const allUser = await prisma.user.findMany({
