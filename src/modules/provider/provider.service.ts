@@ -114,6 +114,27 @@ const getAllMeal = async (
   return result;
 };
 
+const getProviderOwnMeals = async (userId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    const provider = await tx.providerProfile.findUniqueOrThrow({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    const providerId = provider.id;
+    if (!providerId) {
+      throw new Error("Provider Not Found!!");
+    }
+
+    return await tx.meal.findMany({
+      where: {
+        provider_id: providerId,
+      },
+    });
+  });
+};
+
 const getMealsById = async (id: string) => {
   return await prisma.meal.findUniqueOrThrow({
     where: {
@@ -208,6 +229,7 @@ export const providerServices = {
   getAllProvider,
   getProviderById,
   getAllMeal,
+  getProviderOwnMeals,
   getMealsById,
   createMeals,
   updateMeals,

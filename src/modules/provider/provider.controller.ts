@@ -72,6 +72,19 @@ const getAllMeal = async (req: Request, res: Response) => {
   }
 };
 
+const getProviderOwnMeals = async(req: Request, res: Response)=>{
+  const userId = req.user?.id
+try {
+    const providerOwnMeal = await providerServices.getProviderOwnMeals(userId as string);
+    res.status(200).json(providerOwnMeal);
+  } catch (e) {
+    res.status(404).json({
+      message: "Meal not found",
+      error: e,
+    });
+  }
+}
+
 const getMealsById = async (req: Request, res: Response) => {
   const id = req.params.id;
   console.log(id);
@@ -128,6 +141,7 @@ export const providerController = {
   getAllProvider,
   getProviderById,
   getAllMeal,
+  getProviderOwnMeals,
   getMealsById,
   createMeals,
   updateMeals,

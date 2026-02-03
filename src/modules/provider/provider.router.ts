@@ -21,6 +21,8 @@ router.post(
 // -----Meals--------
 router.get("/meals",  providerController.getAllMeal);
 
+router.get("/meals/own-meals", auth(UserRole.PROVIDER),  providerController.getProviderOwnMeals);
+
 router.get("/meals/:id",  providerController.getMealsById);
 
 router.post("/meals", auth(UserRole.PROVIDER), providerController.createMeals);
