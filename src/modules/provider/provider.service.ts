@@ -57,13 +57,11 @@ const getProviderById = async (id: string) => {
 
 // ------Meals-------------
 const getAllMeal = async (
-
   search: string,
   minPrice: number,
   maxPrice: number,
 ) => {
   const andCondition: MealWhereInput[] = [];
-
 
   if (search) {
     andCondition.push({
@@ -101,7 +99,7 @@ const getAllMeal = async (
         ? {
             AND: [...andCondition, { isAvailable: true }],
           }
-        : {isAvailable: true},
+        : { isAvailable: true },
 
     include: {
       categories: {
@@ -156,14 +154,44 @@ const createMeals = async (payload: {
   return result;
 };
 
-const updateMeals = async (mealsData: Meal, id: string) => {
-  const result = await prisma.meal.update({
-    where: {
-      id,
-    },
-    data: mealsData,
+const updateMeals = async (mealsData: Meal, id: string, userId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    const provider = await tx.providerProfile.findUniqueOrThrow({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    const providerOwnMeals = await tx.meal.findMany({
+      where: {
+        provider_id: provider.id,
+      },
+    });
+
+    const matched = providerOwnMeals.find(
+      (providerOwnMeal) => providerOwnMeal.id === id,
+    );
+
+    if (!matched) {
+      throw new Error("This is not your meal");
+    }
+    const mathedId = matched?.id;
+
+    if (!mathedId) {
+      throw new Error("Not Found");
+    }
+
+    // console.log("matched", mathedId);
+    // console.log("providerOwnMeal", providerOwnMeals);
+
+    // console.log(provider);
+    return await tx.meal.update({
+      where: {
+        id: mathedId,
+      },
+      data: mealsData,
+    });
   });
-  return result;
 };
 
 const deleteMeals = async (id: string) => {

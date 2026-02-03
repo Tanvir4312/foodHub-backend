@@ -5,6 +5,9 @@ CREATE TYPE "UserRole" AS ENUM ('CUSTOMER', 'PROVIDER', 'ADMIN');
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED');
 
 -- CreateEnum
+CREATE TYPE "DietaryPreference" AS ENUM ('VEGAN', 'VEGETARIAN', 'GLUTEN_FREE', 'KETO');
+
+-- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'ACCEPTED', 'PREPARING', 'OUTFORDELIVERY', 'DELIVERED', 'CANCELLED');
 
 -- CreateTable
@@ -85,7 +88,7 @@ CREATE TABLE "meals" (
     "price" DOUBLE PRECISION NOT NULL,
     "image_url" TEXT,
     "isAvailable" BOOLEAN NOT NULL DEFAULT true,
-    "dietary" TEXT NOT NULL,
+    "dietary" "DietaryPreference" NOT NULL,
     "provider_id" TEXT NOT NULL,
     "category_id" TEXT NOT NULL,
 
@@ -95,7 +98,6 @@ CREATE TABLE "meals" (
 -- CreateTable
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
-    "items" TEXT[],
     "total_amount" DOUBLE PRECISION NOT NULL,
     "delivery_address" TEXT NOT NULL,
     "payment_method" TEXT NOT NULL DEFAULT 'Cash on delivery(COD)',
@@ -106,6 +108,18 @@ CREATE TABLE "orders" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "orders_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "order-items" (
+    "id" TEXT NOT NULL,
+    "order_id" TEXT NOT NULL,
+    "meal_id" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "price" DOUBLE PRECISION NOT NULL,
+    "total_price" DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT "order-items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -170,6 +184,12 @@ ALTER TABLE "orders" ADD CONSTRAINT "orders_user_id_fkey" FOREIGN KEY ("user_id"
 
 -- AddForeignKey
 ALTER TABLE "orders" ADD CONSTRAINT "orders_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "providersProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order-items" ADD CONSTRAINT "order-items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order-items" ADD CONSTRAINT "order-items_meal_id_fkey" FOREIGN KEY ("meal_id") REFERENCES "meals"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "providersProfile" ADD CONSTRAINT "providersProfile_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

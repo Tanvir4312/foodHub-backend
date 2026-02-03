@@ -5,7 +5,8 @@ model orderItem {
     meal_id  String
     meal     Meal   @relation(fields: [meal_id], references: [id])
     quantity Int    @default(1)
-    priice   Float
+    price   Float
+    total_price Float
 
     @@map("order-items")
 }

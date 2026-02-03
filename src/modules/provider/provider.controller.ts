@@ -94,17 +94,21 @@ const createMeals = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const updateMeals = async (req: Request, res: Response, next: NextFunction) => {
+const updateMeals = async (req: Request, res: Response) => {
   const id = req.params.id;
+  const userId = req.user?.id;
 
   try {
     const mealsUpdate = await providerServices.updateMeals(
       req.body,
       id as string,
+      userId as string,
     );
     res.status(200).json(mealsUpdate);
   } catch (e) {
-    next(e);
+    res.status(493).json({
+      message: "This is not your meal",
+    });
   }
 };
 

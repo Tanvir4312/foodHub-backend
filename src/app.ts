@@ -5,6 +5,7 @@ import cors from "cors";
 import { adminRouter } from "./modules/admin/admin.router";
 import errorHandler from "./middleware/globalErrorHandler";
 import { providerRouter } from "./modules/provider/provider.router";
+import { orderRouter } from "./modules/order/order.router";
 
 const app: Application = express();
 
@@ -25,6 +26,9 @@ app.use("/api/admin", adminRouter)
 
 // Provider
 app.use("/api/provider", providerRouter)
+
+// Order
+app.use("/api/order", orderRouter)
 
 // Error Handler
 app.use(errorHandler)
