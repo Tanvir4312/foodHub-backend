@@ -59,14 +59,6 @@ const getIncomingOrder = async (req: Request, res: Response) => {
     });
   }
 };
-// export type OrderStatusType = {
-//   PENDING: string;
-//   ACCEPTED: string;
-//   PREPARING: string;
-//   OUTFORDELIVERY: string;
-//   DELIVERED: string;
-//   CANCELLED: string;
-// };
 
 const updateOrderStatus = async (req: Request, res: Response) => {
   const id = req.params.id;
@@ -88,10 +80,25 @@ const updateOrderStatus = async (req: Request, res: Response) => {
   }
 };
 
+const deleteOrder = async (req: Request, res: Response) => {
+  const id = req.params.id;
+const userId = req.user?.id
+  try {
+    const order = await orderServices.deleteOrder(id as string, userId as string);
+
+    res.status(200).json(order);
+  } catch (e) {
+    res.status(404).json({
+      message: "This Order alredy ACCEPTED, do not delete this order",
+    });
+  }
+};
+
 export const orderController = {
   createOrder,
   getUserOwnOrder,
   getOrderById,
   getIncomingOrder,
   updateOrderStatus,
+  deleteOrder,
 };

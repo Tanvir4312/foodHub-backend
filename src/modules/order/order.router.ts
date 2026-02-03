@@ -15,7 +15,7 @@ router.post("/orders", auth(UserRole.CUSTOMER), orderController.createOrder)
 
 router.patch("/orders/:id", auth(UserRole.PROVIDER), orderController.updateOrderStatus)
 
-
+router.delete("/:id", auth(UserRole.CUSTOMER), orderController.deleteOrder)
 
 
 
