@@ -21,4 +21,10 @@ router.delete("/categories/:id", auth(UserRole.ADMIN), adminController.deleteCat
 // -----Orders------
 router.get("/orders", auth(UserRole.ADMIN), adminController.getAllOrder);
 
+router.patch("/orders/:id", auth(UserRole.ADMIN), adminController.updateOrderStatus);
+
+// -------meals-------------
+
+router.patch("/meals/:id", auth(UserRole.ADMIN), adminController.mealIsDeleted);
+
 export const adminRouter = router;

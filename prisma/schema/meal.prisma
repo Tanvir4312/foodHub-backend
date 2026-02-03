@@ -6,6 +6,7 @@ model Meal {
     image_url   String?
     isAvailable Boolean           @default(true)
     dietary     DietaryPreference
+    isDeleted   Boolean           @default(false)
     provider_id String
     provider    ProviderProfile   @relation(fields: [provider_id], references: [id])
     category_id String

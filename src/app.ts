@@ -6,6 +6,7 @@ import { adminRouter } from "./modules/admin/admin.router";
 import errorHandler from "./middleware/globalErrorHandler";
 import { providerRouter } from "./modules/provider/provider.router";
 import { orderRouter } from "./modules/order/order.router";
+import { customerRouter } from "./modules/customer/customer.router";
 
 const app: Application = express();
 
@@ -29,6 +30,9 @@ app.use("/api/provider", providerRouter)
 
 // Order
 app.use("/api/order", orderRouter)
+
+// Customer
+app.use("/api/customer", customerRouter)
 
 // Error Handler
 app.use(errorHandler)

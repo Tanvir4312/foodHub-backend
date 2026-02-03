@@ -97,9 +97,9 @@ const getAllMeal = async (
     where:
       andCondition.length > 0
         ? {
-            AND: [...andCondition, { isAvailable: true }],
+            AND: [...andCondition, { isAvailable: true, isDeleted: false }],
           }
-        : { isAvailable: true },
+        : { isAvailable: true, isDeleted: false },
 
     include: {
       categories: {

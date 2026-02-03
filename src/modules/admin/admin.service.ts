@@ -1,8 +1,11 @@
-
 import { prisma } from "../../lib/prisma";
-import { Category, UserStatus } from "../../../generated/prisma/client";
-// import { UserStatus } from "../../enum/userStatus";
+import {
+  Category,
+  OrderStatus,
+  UserStatus,
+} from "../../../generated/prisma/client";
 
+// ----------User-------------
 const getAllUser = async () => {
   const allUser = await prisma.user.findMany({
     include: {
@@ -69,10 +72,44 @@ const deleteCategory = async (id: string) => {
 const getAllOrder = async () => {
   const allUser = await prisma.order.findMany({
     include: {
-      provider: true,
+      provider: {
+        select: {
+          name: true,
+          location: true,
+          phone_number: true,
+        },
+      },
+      orderItems: {
+        select: {
+          meal: {
+            select: {
+              name: true,
+              price: true,
+            },
+          },
+        },
+      },
     },
   });
   return allUser;
+};
+
+const updateOrderStatus = async (id: string, status: OrderStatus) => {
+  return await prisma.order.update({
+    where: { id },
+    data: { status },
+  });
+};
+
+// --------Meals--------
+const mealIsDeleted = async (id: string, data: boolean) => {
+  console.log(id, data)
+  return await prisma.meal.update({
+    where: { id },
+    data: {
+      isDeleted: data,
+    },
+  });
 };
 
 export const adminServices = {
@@ -83,4 +120,6 @@ export const adminServices = {
   updateCategory,
   deleteCategory,
   getAllOrder,
+  updateOrderStatus,
+  mealIsDeleted,
 };

@@ -39,9 +39,9 @@ const createCategories = async (req: Request, res: Response) => {
     res.status(200).json(result);
   } catch (e) {
     res.status(400).json({
-    message : "Category create failed",
-    error : e
-   })
+      message: "Category create failed",
+      error: e,
+    });
   }
 };
 
@@ -51,9 +51,9 @@ const getAllCategory = async (req: Request, res: Response) => {
     res.status(200).json(result);
   } catch (e) {
     res.status(404).json({
-    message : "category not found",
-    error : e
-   })
+      message: "category not found",
+      error: e,
+    });
   }
 };
 const updateCategories = async (
@@ -87,16 +87,45 @@ const deleteCategories = async (
   }
 };
 
+// --------Orders-------------
 const getAllOrder = async (req: Request, res: Response) => {
-    
-  const id = req.params.id;
-
   try {
     const result = await adminServices.getAllOrder();
     res.status(200).json(result);
   } catch (e) {
     res.status(404).json({
       message: "Order not found",
+      error: e,
+    });
+  }
+};
+
+const updateOrderStatus = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const status = req.body.status
+
+  try {
+    const result = await adminServices.updateOrderStatus(id as string, status);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(404).json({
+      message: "Order not found",
+      error: e,
+    });
+  }
+};
+
+// -----Meals-----------
+const mealIsDeleted = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const data = req.body.isDeleted
+
+  try {
+    const result = await adminServices.mealIsDeleted(id as string, data);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(404).json({
+      message: "Meal not found",
       error: e,
     });
   }
@@ -110,4 +139,6 @@ export const adminController = {
   updateCategories,
   deleteCategories,
   getAllOrder,
+  updateOrderStatus,
+  mealIsDeleted
 };
