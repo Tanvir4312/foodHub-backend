@@ -58,7 +58,7 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
       };
     });
 
-    console.log("orderItemsData", orderItemsData);
+    // console.log("orderItemsData", orderItemsData);
 
     // console.log("meals",meals);
     return await tx.order.create({
@@ -86,6 +86,88 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
   });
 };
 
+const getUserOwnOrder = async (userId: string) => {
+  return await prisma.order.findMany({
+    where: {
+      user_id: userId,
+    },
+    include: {
+      orderItems: {
+        include: {
+          meal: {
+            select: {
+              name: true,
+              price: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+const getOrderById = async (orderId: string) => {
+  return await prisma.order.findUniqueOrThrow({
+    where: {
+      id: orderId,
+    },
+    include: {
+      orderItems: {
+        include: {
+          meal: {
+            select: {
+              name: true,
+              price: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+const getIncomingOrder = async (userId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    const provider = await tx.providerProfile.findUniqueOrThrow({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    const providerId = provider?.id;
+
+    if (!providerId) {
+      throw new Error("Provider not found");
+    }
+
+    return await tx.order.findMany({
+      where: {
+        provider_id: providerId,
+      },
+      include: {
+        orderItems: {
+          include: {
+            meal: {
+              select: {
+                name: true,
+                dietary: true,
+                categories: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+};
+
 export const orderServices = {
   createOrder,
+  getUserOwnOrder,
+  getOrderById,
+  getIncomingOrder,
 };

@@ -5,7 +5,18 @@ import { orderController } from "./order.controller";
 
 const router = Router()
 
+router.get("/orders", auth(UserRole.CUSTOMER), orderController.getUserOwnOrder)
+
+router.get("/orders/:id", auth(UserRole.CUSTOMER), orderController.getOrderById)
+
+router.get("/incoming-orders", auth(UserRole.PROVIDER), orderController.getIncomingOrder)
+
 router.post("/orders", auth(UserRole.CUSTOMER), orderController.createOrder)
+
+
+
+
+// TODO : Provider can change order status
 
 
 export const orderRouter = router
