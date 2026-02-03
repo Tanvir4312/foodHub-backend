@@ -1,3 +1,5 @@
+import { Order } from "../../../generated/prisma/client";
+import { OrderStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 
 type OrderPlace = {
@@ -165,9 +167,40 @@ const getIncomingOrder = async (userId: string) => {
   });
 };
 
+const updateOrderStatus = async (
+  id: string,
+  status: OrderStatus,
+  userId: string,
+) => {
+  return await prisma.$transaction(async (tx) => {
+    const provider = await tx.providerProfile.findUniqueOrThrow({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    const providerId = provider.id;
+
+    if (!provider) {
+      throw new Error("Provider not found");
+    }
+
+    return await prisma.order.update({
+      where: {
+        id,
+        provider_id: providerId,
+      },
+      data: {
+        status,
+      },
+    });
+  });
+};
+
 export const orderServices = {
   createOrder,
   getUserOwnOrder,
   getOrderById,
   getIncomingOrder,
+  updateOrderStatus,
 };

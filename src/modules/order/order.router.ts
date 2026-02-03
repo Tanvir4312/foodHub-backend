@@ -13,10 +13,12 @@ router.get("/incoming-orders", auth(UserRole.PROVIDER), orderController.getIncom
 
 router.post("/orders", auth(UserRole.CUSTOMER), orderController.createOrder)
 
+router.patch("/orders/:id", auth(UserRole.PROVIDER), orderController.updateOrderStatus)
 
 
 
-// TODO : Provider can change order status
+
+
 
 
 export const orderRouter = router
