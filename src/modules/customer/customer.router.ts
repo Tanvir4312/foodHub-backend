@@ -23,4 +23,10 @@ router.post(
   customerController.addToCart,
 );
 
+router.get(
+  "/cart",
+  auth(UserRole.CUSTOMER),
+  customerController.getOwnCart,
+);
+
 export const customerRouter = router;

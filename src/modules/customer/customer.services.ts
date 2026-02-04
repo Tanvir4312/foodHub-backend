@@ -178,8 +178,30 @@ const addToCart = async (userId: string, mealId: string, quyantity: number) => {
   });
 };
 
+const getOwnCart = async (id: string) => {
+  return await prisma.cart.findMany({
+    where: {
+      user_id: id,
+    },
+    include: {
+      cartItems: {
+        include: {
+          meal: {
+            select: {
+              name: true,
+              price: true,
+              image_url: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
 export const customerservices = {
   updateCustomerProfile,
   crateCustomerReview,
   addToCart,
+  getOwnCart,
 };

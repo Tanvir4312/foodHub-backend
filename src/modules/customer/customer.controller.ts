@@ -59,8 +59,27 @@ const addToCart = async (req: Request, res: Response) => {
   }
 };
 
+const getOwnCart = async (req: Request, res: Response) => {
+  const id = req.user?.id;
+ 
+
+  try {
+    const result = await customerservices.getOwnCart(
+      id as string,
+   
+    );
+
+    res.status(200).json(result);
+  } catch (e: any) {
+    res.status(400).json({
+      message: e.message || "An unexpected error occurred",
+    });
+  }
+};
+
 export const customerController = {
   updateCustomerProfile,
   crateCustomerReview,
   addToCart,
+  getOwnCart
 };
