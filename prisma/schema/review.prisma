@@ -1,9 +1,9 @@
 model Review {
-    id        String        @id @default(uuid())
+    id      String @id @default(uuid())
     rating  Int
     comment String
     meal_id String
-    meal    Meal  @relation(fields: [meal_id], references: [id])
+    meal    Meal   @relation(fields: [meal_id], references: [id])
     user_id String
     user    User   @relation(fields: [user_id], references: [id])
 

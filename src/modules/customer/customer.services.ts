@@ -21,7 +21,8 @@ const updateCustomerProfile = async (
 
 const crateCustomerReview = async (
   userId: string,
-  data: Omit<Review, "user_id">,
+  data: Omit<Review, "user_id" | "meal_id">,
+  mealId: string,
 ) => {
   return await prisma.$transaction(async (tx) => {
     const isEligible = await tx.order.findFirst({
@@ -30,7 +31,7 @@ const crateCustomerReview = async (
         status: "DELIVERED",
         orderItems: {
           some: {
-            meal_id: data.meal_id,
+            meal_id: mealId,
           },
         },
       },
@@ -46,7 +47,7 @@ const crateCustomerReview = async (
     const alreadyReviewed = await tx.review.findFirst({
       where: {
         user_id: userId,
-        meal_id: data.meal_id,
+        meal_id: mealId,
       },
     });
 
@@ -54,14 +55,31 @@ const crateCustomerReview = async (
       throw new Error("You have already reviewed this meal.");
     }
 
-    return await tx.review.create({
+    const newReview = await tx.review.create({
       data: {
         user_id: userId,
-        meal_id: data.meal_id,
+        meal_id: mealId,
         rating: data.rating,
         comment: data.comment,
       },
     });
+
+    const states = await tx.review.aggregate({
+      where: { meal_id: mealId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    const averageRating = Number(states._avg.rating?.toFixed(1)) || 0;
+
+    await tx.meal.update({
+      where: { id: mealId },
+      data: {
+        averageRating,
+        totalReviews: states._count.rating || 0,
+      },
+    });
+    return newReview;
   });
 };
 

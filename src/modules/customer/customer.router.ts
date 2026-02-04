@@ -12,7 +12,7 @@ router.patch(
 );
 
 router.post(
-  "/customer-review",
+  "/customer-review/:mealId",
   auth(UserRole.CUSTOMER),
   customerController.crateCustomerReview,
 );

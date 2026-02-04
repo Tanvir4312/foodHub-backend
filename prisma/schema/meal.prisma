@@ -1,18 +1,20 @@
 model Meal {
-    id          String            @id @default(uuid())
-    name        String            @db.VarChar(50)
-    description String
-    price       Float
-    image_url   String?
-    isAvailable Boolean           @default(true)
-    dietary     DietaryPreference
-    isDeleted   Boolean           @default(false)
-    provider_id String
-    provider    ProviderProfile   @relation(fields: [provider_id], references: [id])
-    category_id String
-    categories  Category          @relation(fields: [category_id], references: [id])
-    reviews     Review[]
-    orderItems  orderItem[]
+    id            String            @id @default(uuid())
+    name          String            @db.VarChar(50)
+    description   String
+    price         Float
+    image_url     String?
+    isAvailable   Boolean           @default(true)
+    dietary       DietaryPreference
+    isDeleted     Boolean           @default(false)
+    averageRating Float             @default(0)
+    totalReviews  Float             @default(0)
+    provider_id   String
+    provider      ProviderProfile   @relation(fields: [provider_id], references: [id])
+    category_id   String
+    categories    Category          @relation(fields: [category_id], references: [id])
+    reviews       Review[]
+    orderItems    orderItem[]
 
     @@map("meals")
 }

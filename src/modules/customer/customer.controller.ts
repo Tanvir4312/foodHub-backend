@@ -21,12 +21,14 @@ const updateCustomerProfile = async (req: Request, res: Response) => {
 
 const crateCustomerReview = async (req: Request, res: Response) => {
   const id = req.user?.id;
+  const mealId = req.params.mealId
   const data = req.body;
 
   try {
     const result = await customerservices.crateCustomerReview(
       id as string,
       data,
+      mealId as string
     );
 
     res.status(200).json(result);
