@@ -108,7 +108,15 @@ const getAllMeal = async (
           description: true,
         },
       },
+      reviews : {
+        select : {
+          comment : true,
+          rating : true,
+          user_id : true
+        }
+      }
     },
+    
   });
 
   return result;

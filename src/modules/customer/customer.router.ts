@@ -11,4 +11,10 @@ router.patch(
   customerController.updateCustomerProfile,
 );
 
+router.post(
+  "/customer-review",
+  auth(UserRole.CUSTOMER),
+  customerController.crateCustomerReview,
+);
+
 export const customerRouter = router;

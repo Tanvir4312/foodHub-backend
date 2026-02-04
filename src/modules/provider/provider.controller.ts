@@ -64,26 +64,26 @@ const getAllMeal = async (req: Request, res: Response) => {
       maxPrice as number,
     );
     res.status(200).json(mealsCreate);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
 
-const getProviderOwnMeals = async(req: Request, res: Response)=>{
-  const userId = req.user?.id
-try {
-    const providerOwnMeal = await providerServices.getProviderOwnMeals(userId as string);
+const getProviderOwnMeals = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  try {
+    const providerOwnMeal = await providerServices.getProviderOwnMeals(
+      userId as string,
+    );
     res.status(200).json(providerOwnMeal);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
-}
+};
 
 const getMealsById = async (req: Request, res: Response) => {
   const id = req.params.id;
@@ -91,10 +91,9 @@ const getMealsById = async (req: Request, res: Response) => {
   try {
     const mealDetails = await providerServices.getMealsById(id as string);
     res.status(200).json(mealDetails);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -118,9 +117,9 @@ const updateMeals = async (req: Request, res: Response) => {
       userId as string,
     );
     res.status(200).json(mealsUpdate);
-  } catch (e) {
-    res.status(493).json({
-      message: "This is not your meal",
+  } catch (e: any) {
+    res.status(404).json({
+      message: e.message || "An unexpected error occurred",
     });
   }
 };

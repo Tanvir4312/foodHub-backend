@@ -6,8 +6,10 @@ const getAllUser = async (req: Request, res: Response) => {
   try {
     const result = await adminServices.getAllUser();
     res.status(200).json(result);
-  } catch (err) {
-    console.error(err);
+  } catch (e: any) {
+    res.status(404).json({
+      message: e.message || "An unexpected error occurred",
+    });
   }
 };
 const updateUserStatus = async (
@@ -37,10 +39,9 @@ const createCategories = async (req: Request, res: Response) => {
   try {
     const result = await adminServices.createCategories(req.body);
     res.status(200).json(result);
-  } catch (e) {
-    res.status(400).json({
-      message: "Category create failed",
-      error: e,
+  } catch (e: any) {
+    res.status(404).json({
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -49,10 +50,9 @@ const getAllCategory = async (req: Request, res: Response) => {
   try {
     const result = await adminServices.getAllCategory();
     res.status(200).json(result);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "category not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -92,25 +92,23 @@ const getAllOrder = async (req: Request, res: Response) => {
   try {
     const result = await adminServices.getAllOrder();
     res.status(200).json(result);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Order not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
 
 const updateOrderStatus = async (req: Request, res: Response) => {
   const id = req.params.id;
-  const status = req.body.status
+  const status = req.body.status;
 
   try {
     const result = await adminServices.updateOrderStatus(id as string, status);
     res.status(200).json(result);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Order not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -118,15 +116,14 @@ const updateOrderStatus = async (req: Request, res: Response) => {
 // -----Meals-----------
 const mealIsDeleted = async (req: Request, res: Response) => {
   const id = req.params.id;
-  const data = req.body.isDeleted
+  const data = req.body.isDeleted;
 
   try {
     const result = await adminServices.mealIsDeleted(id as string, data);
     res.status(200).json(result);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
-      error: e,
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -140,5 +137,5 @@ export const adminController = {
   deleteCategories,
   getAllOrder,
   updateOrderStatus,
-  mealIsDeleted
+  mealIsDeleted,
 };

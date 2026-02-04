@@ -11,9 +11,9 @@ const createOrder = async (req: Request, res: Response) => {
     );
 
     res.status(200).json(orderCreate);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -25,9 +25,9 @@ const getUserOwnOrder = async (req: Request, res: Response) => {
     const order = await orderServices.getUserOwnOrder(userId as string);
 
     res.status(200).json(order);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -39,9 +39,9 @@ const getOrderById = async (req: Request, res: Response) => {
     const order = await orderServices.getOrderById(orderId as string);
 
     res.status(200).json(order);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -53,9 +53,9 @@ const getIncomingOrder = async (req: Request, res: Response) => {
     const order = await orderServices.getIncomingOrder(userId as string);
 
     res.status(200).json(order);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
@@ -73,23 +73,26 @@ const updateOrderStatus = async (req: Request, res: Response) => {
     );
 
     res.status(200).json(order);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "Meal not found",
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
 
 const deleteOrder = async (req: Request, res: Response) => {
   const id = req.params.id;
-const userId = req.user?.id
+  const userId = req.user?.id;
   try {
-    const order = await orderServices.deleteOrder(id as string, userId as string);
+    const order = await orderServices.deleteOrder(
+      id as string,
+      userId as string,
+    );
 
     res.status(200).json(order);
-  } catch (e) {
+  } catch (e: any) {
     res.status(404).json({
-      message: "This Order alredy ACCEPTED, do not delete this order",
+      message: e.message || "An unexpected error occurred",
     });
   }
 };
