@@ -17,4 +17,10 @@ router.post(
   customerController.crateCustomerReview,
 );
 
+router.post(
+  "/addToCart/:id",
+  auth(UserRole.CUSTOMER),
+  customerController.addToCart,
+);
+
 export const customerRouter = router;

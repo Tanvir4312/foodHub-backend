@@ -15,6 +15,7 @@ model Meal {
     categories    Category          @relation(fields: [category_id], references: [id])
     reviews       Review[]
     orderItems    orderItem[]
+    cartItems     CartItem[]
 
     @@map("meals")
 }

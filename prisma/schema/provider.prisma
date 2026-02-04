@@ -1,14 +1,15 @@
 model ProviderProfile {
-   id        String        @id @default(uuid())
-    name         String @db.VarChar(50)
+    id           String  @id @default(uuid())
+    name         String  @db.VarChar(50)
     description  String?
     logo_url     String?
     location     String
     phone_number String? @db.VarChar(15)
-    user_id      String      @unique
-    user         User     @relation(fields: [user_id], references: [id])
+    user_id      String  @unique
+    user         User    @relation(fields: [user_id], references: [id])
     meals        Meal[]
     orders       Order[]
+    carts        Cart[]
 
     @@map("providersProfile")
 }

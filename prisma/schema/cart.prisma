@@ -1,0 +1,11 @@
+model Cart {
+    id          String          @id @default(ulid())
+    user_id     String
+    user        User            @relation(fields: [user_id], references: [id])
+    provider_id String
+    provider    ProviderProfile @relation(fields: [provider_id], references: [id])
+    cartItems   CartItem[]
+
+    @@unique([user_id, provider_id])
+}
+
