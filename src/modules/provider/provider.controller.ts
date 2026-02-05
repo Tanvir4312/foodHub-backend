@@ -18,8 +18,12 @@ const createProviderProfile = async (
       id,
     );
     res.status(200).json(providerProfileCreate);
-  } catch (e) {
-    next(e);
+  } catch (e: any) {
+    if (e.code === "P2002") {
+      e.message = "An account with this email already exists.";
+    } else {
+      e.message = "Something went wrong while adding the item to the cart.";
+    }
   }
 };
 const getAllProvider = async (req: Request, res: Response) => {
@@ -87,7 +91,7 @@ const getProviderOwnMeals = async (req: Request, res: Response) => {
 
 const getMealsById = async (req: Request, res: Response) => {
   const id = req.params.id;
-  console.log(id);
+
   try {
     const mealDetails = await providerServices.getMealsById(id as string);
     res.status(200).json(mealDetails);

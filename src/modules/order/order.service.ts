@@ -198,13 +198,13 @@ const updateOrderStatus = async (
 };
 
 const deleteOrder = async (id: string, userId: string) => {
-  console.log("id",id, "userId", userId)
+ 
   const order = await prisma.order.findUnique({
     where: {
       id,
     },
   });
-  console.log(order)
+  
 
   if (!order || order.user_id !== userId) {
     throw new Error("Order not found");
@@ -213,7 +213,7 @@ const deleteOrder = async (id: string, userId: string) => {
   if (order.status !== "PENDING") {
     throw new Error("This Order alredy ACCEPTED, do not delete this order");
   }
-console.log(order.status)
+
   return await prisma.order.delete({
     where: {
       id,

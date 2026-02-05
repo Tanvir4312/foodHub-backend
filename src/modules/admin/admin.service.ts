@@ -103,7 +103,7 @@ const updateOrderStatus = async (id: string, status: OrderStatus) => {
 
 // --------Meals--------
 const mealIsDeleted = async (id: string, data: boolean) => {
-  console.log(id, data)
+  
   return await prisma.meal.update({
     where: { id },
     data: {

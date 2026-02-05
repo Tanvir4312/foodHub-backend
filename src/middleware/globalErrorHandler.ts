@@ -26,7 +26,7 @@ function errorHandler(
   res.status(500);
   res.json({
     message: errorMessage,
-    error: errorDetails,
+   
   });
 }
 
