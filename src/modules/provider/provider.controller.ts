@@ -24,6 +24,7 @@ const createProviderProfile = async (
     } else {
       e.message = "Something went wrong while adding the item to the cart.";
     }
+    next(e)
   }
 };
 const getAllProvider = async (req: Request, res: Response) => {

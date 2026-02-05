@@ -656,8 +656,7 @@ function errorHandler(err, req, res, next) {
   }
   res.status(500);
   res.json({
-    message: errorMessage,
-    error: errorDetails
+    message: errorMessage
   });
 }
 var globalErrorHandler_default;
@@ -887,6 +886,11 @@ var init_provider_controller = __esm({
         );
         res.status(200).json(providerProfileCreate);
       } catch (e) {
+        if (e.code === "P2002") {
+          e.message = "An account with this email already exists.";
+        } else {
+          e.message = "Something went wrong while adding the item to the cart.";
+        }
         next(e);
       }
     };
