@@ -46,16 +46,6 @@ const createCategories = async (req: Request, res: Response) => {
   }
 };
 
-const getAllCategory = async (req: Request, res: Response) => {
-  try {
-    const result = await adminServices.getAllCategory();
-    res.status(200).json(result);
-  } catch (e: any) {
-    res.status(404).json({
-      message: e.message || "An unexpected error occurred",
-    });
-  }
-};
 const updateCategories = async (
   req: Request,
   res: Response,
@@ -86,8 +76,8 @@ const deleteCategories = async (
     next(e);
   }
 };
+// -------------Orders---------------------
 
-// --------Orders-------------
 const getAllOrder = async (req: Request, res: Response) => {
   try {
     const result = await adminServices.getAllOrder();
@@ -128,14 +118,28 @@ const mealIsDeleted = async (req: Request, res: Response) => {
   }
 };
 
+// -----Stats-----------
+const getStats = async (req: Request, res: Response) => {
+  const id = req.user?.id;
+
+  try {
+    const result = await adminServices.getStats(id as string);
+    res.status(200).json(result);
+  } catch (e: any) {
+    res.status(404).json({
+      message: e.message || "An unexpected error occurred",
+    });
+  }
+};
+
 export const adminController = {
   getAllUser,
   updateUserStatus,
   createCategories,
-  getAllCategory,
   updateCategories,
   deleteCategories,
   getAllOrder,
   updateOrderStatus,
   mealIsDeleted,
+  getStats,
 };

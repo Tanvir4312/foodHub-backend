@@ -39,16 +39,6 @@ const createCategories = async (category: Category) => {
   return createCategory;
 };
 
-const getAllCategory = async () => {
-  const allCategory = await prisma.category.findMany({
-    include: {
-      meals: true,
-    },
-  });
-  const totalCategory = await prisma.category.count();
-  return { data: allCategory, totalCategory };
-};
-
 const updateCategory = async (id: string, data: Category) => {
   const categoryUpdate = await prisma.category.update({
     where: {
@@ -103,7 +93,6 @@ const updateOrderStatus = async (id: string, status: OrderStatus) => {
 
 // --------Meals--------
 const mealIsDeleted = async (id: string, data: boolean) => {
-  
   return await prisma.meal.update({
     where: { id },
     data: {
@@ -112,14 +101,129 @@ const mealIsDeleted = async (id: string, data: boolean) => {
   });
 };
 
+// ----------Stats-------------
+const getStats = async (userId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    const isAdmin = await tx.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!isAdmin) {
+      throw new Error("Forbidden");
+    }
+
+    const userCount = await tx.user.count();
+
+    const activeUser = await tx.user.count({
+      where: {
+        status: "ACTIVE",
+      },
+    });
+    const suspendedUser = await tx.user.count({
+      where: {
+        status: "SUSPENDED",
+      },
+    });
+
+    const totalRevenue = await tx.order.aggregate({
+      _sum: {
+        total_amount: true,
+      },
+      where: {
+        status: "DELIVERED",
+      },
+    });
+
+    const averageOrderValue = await tx.order.aggregate({
+      _avg: {
+        total_amount: true,
+      },
+    });
+    // const aov = Number(averageOrderValue).toFixed(2);
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const monthlyAov = await tx.order.aggregate({
+      where: {
+        status: "DELIVERED",
+        createdAt: {
+          gte: startOfMonth,
+        },
+      },
+      _avg: {
+        total_amount: true,
+      },
+    });
+
+    const totalDeliveredOrder = await tx.order.count({
+      where: {
+        status: "DELIVERED",
+      },
+    });
+
+    const totalPendingOrder = await tx.order.count({
+      where: {
+        status: "PENDING",
+      },
+    });
+
+    const totalCanclledOrder = await tx.order.count({
+      where: {
+        status: "CANCELLED",
+      },
+    });
+
+    const activeProvider = await tx.providerProfile.count({
+      where: {
+        isAvailable: true,
+      },
+    });
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const newSingUps24H = await tx.user.count({
+      where: {
+        createdAt: {
+          gte: twentyFourHoursAgo,
+        },
+      },
+    });
+
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const newSignUps7D = await tx.user.count({
+      where: {
+        createdAt: {
+          gte: oneWeekAgo,
+        },
+      },
+    });
+
+    return {
+      active_user: activeUser,
+      supended_user: suspendedUser,
+      total_user: userCount,
+      total_revenue: totalRevenue,
+      average_order_value: averageOrderValue,
+      monthly_AOV: monthlyAov,
+      total_delivered: totalDeliveredOrder,
+      pending_orders: totalPendingOrder,
+      cancleed_orders: totalCanclledOrder,
+      active_providers: activeProvider,
+      last_24H_singups: newSingUps24H,
+      last_7D_singups: newSignUps7D,
+    };
+  });
+};
+
 export const adminServices = {
   getAllUser,
   updateUserStatus,
   createCategories,
-  getAllCategory,
   updateCategory,
   deleteCategory,
   getAllOrder,
   updateOrderStatus,
   mealIsDeleted,
+  getStats,
 };

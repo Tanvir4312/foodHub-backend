@@ -1,6 +1,24 @@
 import { Request, Response } from "express";
 import { customerservices } from "./customer.services";
 
+const getMyCustomerProfile = async (req: Request, res: Response) => {
+  const id = req.user?.id;
+  
+
+  try {
+    const result = await customerservices.getMyCustomerProfile(
+      id as string,
+     
+    );
+
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      message: "User not found",
+    });
+  }
+};
+
 const updateCustomerProfile = async (req: Request, res: Response) => {
   const id = req.user?.id;
   const data = req.body;
@@ -39,34 +57,13 @@ const crateCustomerReview = async (req: Request, res: Response) => {
   }
 };
 
-const addToCart = async (req: Request, res: Response) => {
+const getCartById = async (req: Request, res: Response) => {
   const id = req.user?.id;
-  const mealId = req.params.id;
-  const { quantity } = req.body;
-
+  const cartId = req.params.cartId;
   try {
-    const result = await customerservices.addToCart(
+    const result = await customerservices.getCartById(
       id as string,
-      mealId as string,
-      quantity,
-    );
-
-    res.status(200).json(result);
-  } catch (e: any) {
-    res.status(400).json({
-      message: e.message || "An unexpected error occurred",
-    });
-  }
-};
-
-const getOwnCart = async (req: Request, res: Response) => {
-  const id = req.user?.id;
- 
-
-  try {
-    const result = await customerservices.getOwnCart(
-      id as string,
-   
+      cartId as string,
     );
 
     res.status(200).json(result);
@@ -78,8 +75,8 @@ const getOwnCart = async (req: Request, res: Response) => {
 };
 
 export const customerController = {
+  getMyCustomerProfile,
   updateCustomerProfile,
   crateCustomerReview,
-  addToCart,
-  getOwnCart
+  getCartById,
 };

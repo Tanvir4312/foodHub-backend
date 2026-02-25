@@ -30,7 +30,7 @@ var init_class = __esm({
       "clientVersion": "7.3.0",
       "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
       "activeProvider": "postgresql",
-      "inlineSchema": 'model User {\n  id              String           @id\n  name            String\n  email           String\n  emailVerified   Boolean          @default(false)\n  phone_number    String?          @db.VarChar(15)\n  image           String?\n  role            UserRole         @default(CUSTOMER)\n  status          UserStatus       @default(ACTIVE)\n  createdAt       DateTime         @default(now())\n  updatedAt       DateTime         @updatedAt\n  sessions        Session[]\n  accounts        Account[]\n  providerProfile ProviderProfile?\n  orders          Order[]\n  reviews         Review[]\n  carts           Cart[]\n\n  @@unique([email])\n  @@map("users")\n}\n\nenum UserRole {\n  CUSTOMER\n  PROVIDER\n  ADMIN\n}\n\nenum UserStatus {\n  ACTIVE\n  SUSPENDED\n}\n\nmodel Session {\n  id        String   @id\n  expiresAt DateTime\n  token     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([token])\n  @@index([userId])\n  @@map("session")\n}\n\nmodel Account {\n  id                    String    @id\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@index([userId])\n  @@map("account")\n}\n\nmodel Verification {\n  id         String   @id\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@index([identifier])\n  @@map("verification")\n}\n\nmodel Cart {\n  id          String          @id @default(ulid())\n  user_id     String\n  user        User            @relation(fields: [user_id], references: [id])\n  provider_id String\n  provider    ProviderProfile @relation(fields: [provider_id], references: [id])\n  cartItems   CartItem[]\n\n  @@unique([user_id, provider_id])\n}\n\nmodel CartItem {\n  id       String @id @default(ulid())\n  cart_id  String\n  cart     Cart   @relation(fields: [cart_id], references: [id], onDelete: Cascade)\n  meal_id  String\n  meal     Meal   @relation(fields: [meal_id], references: [id])\n  quantity Int    @default(1)\n\n  @@unique([cart_id, meal_id])\n}\n\nmodel Category {\n  id          String  @id @default(uuid())\n  name        String  @unique @db.VarChar(50)\n  description String?\n  meals       Meal[]\n\n  @@map("categories")\n}\n\nmodel Meal {\n  id            String            @id @default(uuid())\n  name          String            @db.VarChar(50)\n  description   String\n  price         Float\n  image_url     String?\n  isAvailable   Boolean           @default(true)\n  dietary       DietaryPreference\n  isDeleted     Boolean           @default(false)\n  averageRating Float             @default(0)\n  totalReviews  Float             @default(0)\n  provider_id   String\n  provider      ProviderProfile   @relation(fields: [provider_id], references: [id])\n  category_id   String\n  categories    Category          @relation(fields: [category_id], references: [id])\n  reviews       Review[]\n  orderItems    orderItem[]\n  cartItems     CartItem[]\n\n  @@map("meals")\n}\n\nenum DietaryPreference {\n  VEGAN\n  VEGETARIAN\n  GLUTEN_FREE\n  KETO\n}\n\nmodel Order {\n  id               String          @id @default(uuid())\n  total_amount     Float\n  delivery_address String\n  payment_method   String          @default("Cash on delivery(COD)")\n  status           OrderStatus     @default(PENDING)\n  user_id          String\n  user             User            @relation(fields: [user_id], references: [id])\n  provider_id      String\n  provider         ProviderProfile @relation(fields: [provider_id], references: [id])\n  createdAt        DateTime        @default(now())\n  updatedAt        DateTime        @updatedAt\n  orderItems       orderItem[]\n\n  @@map("orders")\n}\n\nenum OrderStatus {\n  PENDING\n  ACCEPTED\n  PREPARING\n  OUTFORDELIVERY\n  DELIVERED\n  CANCELLED\n}\n\nmodel orderItem {\n  id          String @id @default(ulid())\n  order_id    String\n  order       Order  @relation(fields: [order_id], references: [id], onDelete: Cascade)\n  meal_id     String\n  meal        Meal   @relation(fields: [meal_id], references: [id])\n  quantity    Int    @default(1)\n  price       Float\n  total_price Float\n\n  @@map("order-items")\n}\n\nmodel ProviderProfile {\n  id           String  @id @default(uuid())\n  name         String  @db.VarChar(50)\n  description  String?\n  logo_url     String?\n  location     String\n  phone_number String? @db.VarChar(15)\n  user_id      String  @unique\n  user         User    @relation(fields: [user_id], references: [id])\n  meals        Meal[]\n  orders       Order[]\n  carts        Cart[]\n\n  @@map("providersProfile")\n}\n\nmodel Review {\n  id      String @id @default(uuid())\n  rating  Int\n  comment String\n  meal_id String\n  meal    Meal   @relation(fields: [meal_id], references: [id])\n  user_id String\n  user    User   @relation(fields: [user_id], references: [id])\n\n  @@map("reviews")\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../../generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n',
+      "inlineSchema": 'model User {\n  id              String           @id\n  name            String\n  email           String\n  emailVerified   Boolean          @default(false)\n  phone_number    String?          @db.VarChar(15)\n  image           String?\n  role            UserRole         @default(CUSTOMER)\n  status          UserStatus       @default(ACTIVE)\n  createdAt       DateTime         @default(now())\n  updatedAt       DateTime         @updatedAt\n  sessions        Session[]\n  accounts        Account[]\n  providerProfile ProviderProfile?\n  orders          Order[]\n  reviews         Review[]\n  carts           Cart[]\n\n  @@unique([email])\n  @@map("users")\n}\n\nenum UserRole {\n  CUSTOMER\n  PROVIDER\n  ADMIN\n}\n\nenum UserStatus {\n  ACTIVE\n  SUSPENDED\n}\n\nmodel Session {\n  id        String   @id\n  expiresAt DateTime\n  token     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([token])\n  @@index([userId])\n  @@map("session")\n}\n\nmodel Account {\n  id                    String    @id\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@index([userId])\n  @@map("account")\n}\n\nmodel Verification {\n  id         String   @id\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@index([identifier])\n  @@map("verification")\n}\n\nmodel Cart {\n  id          String          @id @default(ulid())\n  user_id     String\n  user        User            @relation(fields: [user_id], references: [id])\n  provider_id String\n  provider    ProviderProfile @relation(fields: [provider_id], references: [id])\n  cartItems   CartItem[]\n\n  @@unique([user_id, provider_id])\n}\n\nmodel CartItem {\n  id       String @id @default(ulid())\n  cart_id  String\n  cart     Cart   @relation(fields: [cart_id], references: [id], onDelete: Cascade)\n  meal_id  String\n  meal     Meal   @relation(fields: [meal_id], references: [id])\n  quantity Int    @default(1)\n\n  @@unique([cart_id, meal_id])\n}\n\nmodel Category {\n  id          String  @id @default(uuid())\n  name        String  @unique @db.VarChar(50)\n  description String?\n  meals       Meal[]\n\n  @@map("categories")\n}\n\nmodel Meal {\n  id            String            @id @default(uuid())\n  name          String            @db.VarChar(50)\n  description   String\n  price         Float\n  image_url     String?\n  isAvailable   Boolean           @default(true)\n  dietary       DietaryPreference\n  isDeleted     Boolean           @default(false)\n  averageRating Float             @default(0)\n  totalReviews  Float             @default(0)\n  provider_id   String\n  provider      ProviderProfile   @relation(fields: [provider_id], references: [id])\n  category_id   String\n  categories    Category          @relation(fields: [category_id], references: [id])\n  reviews       Review[]\n  orderItems    orderItem[]\n  cartItems     CartItem[]\n\n  @@map("meals")\n}\n\nenum DietaryPreference {\n  VEGAN\n  VEGETARIAN\n  GLUTEN_FREE\n  KETO\n  NON_VEGETARIAN\n  DAIRY_FREE\n  NUT_FREE\n  EGG_FREE\n  LOW_CARB\n  LOW_FAT\n  HIGH_PROTEIN\n}\n\nmodel Order {\n  id               String          @id @default(uuid())\n  total_amount     Float\n  delivery_address String\n  payment_method   String          @default("Cash on delivery(COD)")\n  status           OrderStatus     @default(PENDING)\n  user_id          String\n  user             User            @relation(fields: [user_id], references: [id])\n  provider_id      String\n  provider         ProviderProfile @relation(fields: [provider_id], references: [id])\n  createdAt        DateTime        @default(now())\n  updatedAt        DateTime        @updatedAt\n  orderItems       orderItem[]\n\n  @@map("orders")\n}\n\nenum OrderStatus {\n  PENDING\n  ACCEPTED\n  PREPARING\n  OUTFORDELIVERY\n  DELIVERED\n  CANCELLED\n}\n\nmodel orderItem {\n  id          String @id @default(ulid())\n  order_id    String\n  order       Order  @relation(fields: [order_id], references: [id], onDelete: Cascade)\n  meal_id     String\n  meal        Meal   @relation(fields: [meal_id], references: [id])\n  quantity    Int    @default(1)\n  price       Float\n  total_price Float\n\n  @@map("order-items")\n}\n\nmodel ProviderProfile {\n  id           String  @id @default(uuid())\n  name         String  @db.VarChar(50)\n  description  String?\n  logo_url     String?\n  location     String\n  phone_number String? @db.VarChar(15)\n  user_id      String  @unique\n  user         User    @relation(fields: [user_id], references: [id])\n  meals        Meal[]\n  orders       Order[]\n  carts        Cart[]\n\n  @@map("providersProfile")\n}\n\nmodel Review {\n  id      String @id @default(uuid())\n  rating  Int\n  comment String\n  meal_id String\n  meal    Meal   @relation(fields: [meal_id], references: [id])\n  user_id String\n  user    User   @relation(fields: [user_id], references: [id])\n\n  @@map("reviews")\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../../generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n',
       "runtimeDataModel": {
         "models": {},
         "enums": {},
@@ -627,7 +627,7 @@ var init_admin_router = __esm({
     router = Router();
     router.get("/users", auth_middleware_default(UserRole.ADMIN), adminController.getAllUser);
     router.patch("/users/:id", auth_middleware_default(UserRole.ADMIN), adminController.updateUserStatus);
-    router.get("/categories", auth_middleware_default(UserRole.ADMIN), adminController.getAllCategory);
+    router.get("/categories", adminController.getAllCategory);
     router.post("/categories", auth_middleware_default(UserRole.ADMIN), adminController.createCategories);
     router.patch("/categories/:id", auth_middleware_default(UserRole.ADMIN), adminController.updateCategories);
     router.delete("/categories/:id", auth_middleware_default(UserRole.ADMIN), adminController.deleteCategories);
@@ -641,20 +641,19 @@ var init_admin_router = __esm({
 // src/middleware/globalErrorHandler.ts
 function errorHandler(err, req, res, next) {
   let statusCode = 500;
-  let errorMessage = "Interval server error!!";
-  let errorDetails = err;
+  let errorMessage = err.message || "Internal server error!!";
   if (err instanceof prismaNamespace_exports.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {
-      statusCode = 404, errorMessage = "not found";
+      statusCode = 404, errorMessage = err.message || "not found";
     }
     if (err.code === "P2002") {
-      statusCode = 404, errorMessage = "duplicate";
+      statusCode = 400, errorMessage = err.message || "Duplicate!!";
     }
   }
   if (err instanceof prismaNamespace_exports.PrismaClientValidationError) {
     statusCode = 400, errorMessage = "creation failed";
   }
-  res.status(500);
+  res.status(statusCode);
   res.json({
     message: errorMessage
   });
@@ -782,6 +781,14 @@ var init_provider_service = __esm({
         return await tx.meal.findMany({
           where: {
             provider_id: providerId
+          },
+          include: {
+            reviews: {
+              select: {
+                rating: true,
+                comment: true
+              }
+            }
           }
         });
       });
@@ -800,21 +807,41 @@ var init_provider_service = __esm({
         }
       });
     };
-    createMeals = async (payload) => {
-      await prisma.providerProfile.findFirstOrThrow({
-        where: {
-          id: payload.provider_id
+    createMeals = async (payload, userId) => {
+      return await prisma.$transaction(async (tx) => {
+        const provider = await tx.providerProfile.findUnique({
+          where: {
+            user_id: userId
+          }
+        });
+        const providerId = provider?.id;
+        if (!providerId) {
+          throw new Error(
+            "Provider profile not found. Please complete your provider profile first."
+          );
         }
+        await prisma.providerProfile.findFirstOrThrow({
+          where: {
+            id: providerId
+          }
+        });
+        await prisma.category.findFirstOrThrow({
+          where: {
+            id: payload.category_id
+          }
+        });
+        const result = await prisma.meal.create({
+          data: { ...payload, provider_id: providerId },
+          include: {
+            categories: {
+              select: {
+                name: true
+              }
+            }
+          }
+        });
+        return result;
       });
-      await prisma.category.findFirstOrThrow({
-        where: {
-          id: payload.category_id
-        }
-      });
-      const result = await prisma.meal.create({
-        data: payload
-      });
-      return result;
     };
     updateMeals = async (mealsData, id, userId) => {
       return await prisma.$transaction(async (tx) => {
@@ -887,7 +914,7 @@ var init_provider_controller = __esm({
         res.status(200).json(providerProfileCreate);
       } catch (e) {
         if (e.code === "P2002") {
-          e.message = "An account with this email already exists.";
+          e.message = "This email is already associated with an existing account. Please use a different email.";
         } else {
           e.message = "Something went wrong while adding the item to the cart.";
         }
@@ -963,10 +990,19 @@ var init_provider_controller = __esm({
       }
     };
     createMeals2 = async (req, res, next) => {
+      const id = req.user?.id;
       try {
-        const mealsCreate = await providerServices.createMeals(req.body);
+        const mealsCreate = await providerServices.createMeals(
+          req.body,
+          id
+        );
         res.status(200).json(mealsCreate);
       } catch (e) {
+        if (e.code === "P2025") {
+          e.message = "Missing required fields: name, price, or category.";
+        } else {
+          e.message = "Something went wrong while crating the meal.";
+        }
         next(e);
       }
     };

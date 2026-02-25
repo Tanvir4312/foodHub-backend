@@ -5,6 +5,7 @@ model CartItem {
     meal_id  String
     meal     Meal   @relation(fields: [meal_id], references: [id])
     quantity Int    @default(1)
+    price    Float 
 
     @@unique([cart_id, meal_id])
 }

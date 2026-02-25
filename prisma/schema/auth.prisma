@@ -28,6 +28,7 @@ enum UserRole {
 
 enum UserStatus {
     ACTIVE
+    INACTIVE
     SUSPENDED
 }
 

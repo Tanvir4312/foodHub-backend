@@ -3,22 +3,30 @@ import auth from "../../middleware/auth_middleware";
 import { UserRole } from "../../../generated/prisma/enums";
 import { orderController } from "./order.controller";
 
-const router = Router()
+const router = Router();
 
-router.get("/orders", auth(UserRole.CUSTOMER), orderController.getUserOwnOrder)
+router.get("/orders", auth(UserRole.CUSTOMER), orderController.getUserOwnOrder);
 
-router.get("/orders/:id", auth(UserRole.CUSTOMER), orderController.getOrderById)
+router.get(
+  "/orders/:id",
+  auth(UserRole.CUSTOMER, UserRole.PROVIDER, UserRole.ADMIN),
+  orderController.getOrderById,
+);
 
-router.get("/incoming-orders", auth(UserRole.PROVIDER), orderController.getIncomingOrder)
+router.get(
+  "/incoming-orders",
+  auth(UserRole.PROVIDER),
+  orderController.getIncomingOrder,
+);
 
-router.post("/orders", auth(UserRole.CUSTOMER), orderController.createOrder)
+router.post("/orders", auth(UserRole.CUSTOMER), orderController.createOrder);
 
-router.patch("/orders/:id", auth(UserRole.PROVIDER), orderController.updateOrderStatus)
+router.patch(
+  "/orders/:id",
+  auth(UserRole.PROVIDER),
+  orderController.updateOrderStatus,
+);
 
-router.delete("/:id", auth(UserRole.CUSTOMER), orderController.deleteOrder)
+router.delete("/:id", auth(UserRole.CUSTOMER), orderController.deleteOrder);
 
-
-
-
-
-export const orderRouter = router
+export const orderRouter = router;

@@ -20,61 +20,33 @@ const createProviderProfile = async (
     res.status(200).json(providerProfileCreate);
   } catch (e: any) {
     if (e.code === "P2002") {
-      e.message = "An account with this email already exists.";
+      e.message =
+        "This email is already associated with an existing account. Please use a different email.";
     } else {
       e.message = "Something went wrong while adding the item to the cart.";
     }
-    next(e)
-  }
-};
-const getAllProvider = async (req: Request, res: Response) => {
-  try {
-    const allProvider = await providerServices.getAllProvider();
-    res.status(200).json(allProvider);
-  } catch (e) {
-    res.status(404).json({
-      message: "Provider not found",
-      error: e,
-    });
+    next(e);
   }
 };
 
-const getProviderById = async (req: Request, res: Response) => {
+const updateProviderOwnProfile = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
   const id = req.params.id;
+  const providerData = req.body;
   try {
-    const getSpecificProvider = await providerServices.getProviderById(
+    const providerOwnProfile = await providerServices.updateProviderOwnProfile(
+      userId as string,
       id as string,
+      providerData,
     );
-    res.status(200).json(getSpecificProvider);
-  } catch (e) {
-    res.status(404).json({
-      message: "Provider not found",
-      error: e,
-    });
-  }
-};
-// -------Meals------------
-const getAllMeal = async (req: Request, res: Response) => {
-  const search = req.query.search;
-  const minPriceStr = req.query.minPrice;
-  const maxPriceStr = req.query.maxPrice;
-
-  const minPrice = Number(minPriceStr);
-  const maxPrice = Number(maxPriceStr);
-
-  try {
-    const mealsCreate = await providerServices.getAllMeal(
-      search as string,
-      minPrice as number,
-      maxPrice as number,
-    );
-    res.status(200).json(mealsCreate);
+    res.status(200).json(providerOwnProfile);
   } catch (e: any) {
     res.status(404).json({
       message: e.message || "An unexpected error occurred",
     });
   }
 };
+// -------Meals------------
 
 const getProviderOwnMeals = async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -90,23 +62,23 @@ const getProviderOwnMeals = async (req: Request, res: Response) => {
   }
 };
 
-const getMealsById = async (req: Request, res: Response) => {
-  const id = req.params.id;
-
+const createMeals = async (req: Request, res: Response, next: NextFunction) => {
+  const id = req.user?.id;
   try {
-    const mealDetails = await providerServices.getMealsById(id as string);
-    res.status(200).json(mealDetails);
+    const mealsCreate = await providerServices.createMeals(
+      req.body,
+      id as string,
+    );
+    res.status(200).json(mealsCreate);
   } catch (e: any) {
     res.status(404).json({
       message: e.message || "An unexpected error occurred",
     });
-  }
-};
-const createMeals = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const mealsCreate = await providerServices.createMeals(req.body);
-    res.status(200).json(mealsCreate);
-  } catch (e) {
+    if (e.code === "P2025") {
+      e.message = "Missing required fields: name, price, or category.";
+    } else {
+      e.message = "Something went wrong while crating the meal.";
+    }
     next(e);
   }
 };
@@ -140,14 +112,27 @@ const deleteMeals = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// Stats
+
+const getStats = async (req: Request, res: Response) => {
+  const id = req?.user?.id;
+
+  try {
+    const mealsDelete = await providerServices.getStates(id as string);
+    res.status(200).json(mealsDelete);
+  } catch (e: any) {
+    res.status(404).json({
+      message: e.message || "An unexpected error occurred",
+    });
+  }
+};
+
 export const providerController = {
   createProviderProfile,
-  getAllProvider,
-  getProviderById,
-  getAllMeal,
+  updateProviderOwnProfile,
   getProviderOwnMeals,
-  getMealsById,
   createMeals,
   updateMeals,
   deleteMeals,
+  getStats,
 };

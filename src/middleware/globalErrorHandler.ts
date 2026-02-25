@@ -8,22 +8,22 @@ function errorHandler(
   next: NextFunction,
 ) {
   let statusCode = 500;
-  let errorMessage = "Interval server error!!";
-  let errorDetails = err;
+  let errorMessage = err.message || "Internal server error!!";
+
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {
-      ((statusCode = 404), (errorMessage = "not found"));
+      ((statusCode = 404), (errorMessage = err.message || "not found"));
     }
     if (err.code === "P2002") {
-      ((statusCode = 404), (errorMessage = "duplicate"));
+      ((statusCode = 400), (errorMessage = err.message || "Duplicate!!"));
     }
   }
   if (err instanceof Prisma.PrismaClientValidationError) {
     ((statusCode = 400), (errorMessage = "creation failed"));
   }
 
-  res.status(500);
+  res.status(statusCode);
   res.json({
     message: errorMessage,
    

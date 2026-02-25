@@ -7,6 +7,8 @@ import errorHandler from "./middleware/globalErrorHandler";
 import { providerRouter } from "./modules/provider/provider.router";
 import { orderRouter } from "./modules/order/order.router";
 import { customerRouter } from "./modules/customer/customer.router";
+import { publicRouter } from "./modules/public/public.router";
+import { userRouter } from "./modules/user/user.router";
 
 const app: Application = express();
 
@@ -17,26 +19,30 @@ app.use(
   }),
 );
 
-app.use(express.json())
-
+app.use(express.json());
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 // Admin
-app.use("/api/admin", adminRouter)
+app.use("/api/admin", adminRouter);
 
 // Provider
-app.use("/api/provider", providerRouter)
+app.use("/api/provider", providerRouter);
 
 // Order
-app.use("/api/order", orderRouter)
+app.use("/api/order", orderRouter);
 
 // Customer
-app.use("/api/customer", customerRouter)
+app.use("/api/customer", customerRouter);
+
+// User
+app.use("/api", userRouter);
+
+// Public apis
+app.use("/api", publicRouter);
 
 // Error Handler
-app.use(errorHandler)
-
+app.use(errorHandler);
 
 app.get("/", async (req, res) => {
   res.send("Server Running");

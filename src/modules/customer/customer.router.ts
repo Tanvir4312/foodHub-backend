@@ -5,6 +5,11 @@ import { UserRole } from "../../../generated/prisma/enums";
 
 const router = Router();
 
+router.get(
+  "/customer-profile/:id",
+  auth(UserRole.CUSTOMER),
+  customerController.getMyCustomerProfile,
+);
 router.patch(
   "/customer-profile",
   auth(UserRole.CUSTOMER),
@@ -17,16 +22,12 @@ router.post(
   customerController.crateCustomerReview,
 );
 
-router.post(
-  "/addToCart/:id",
-  auth(UserRole.CUSTOMER),
-  customerController.addToCart,
-);
+// Cart
+router.get("/cart/:cartId", auth(UserRole.CUSTOMER), customerController.getCartById);
 
-router.get(
-  "/cart",
-  auth(UserRole.CUSTOMER),
-  customerController.getOwnCart,
-);
+
+
+
+
 
 export const customerRouter = router;

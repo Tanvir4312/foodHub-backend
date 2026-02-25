@@ -12,7 +12,7 @@ model Meal {
     provider_id   String
     provider      ProviderProfile   @relation(fields: [provider_id], references: [id])
     category_id   String
-    categories    Category          @relation(fields: [category_id], references: [id])
+    categories    Category          @relation(fields: [category_id], references: [id], onDelete: Cascade)
     reviews       Review[]
     orderItems    orderItem[]
     cartItems     CartItem[]
@@ -25,4 +25,11 @@ enum DietaryPreference {
     VEGETARIAN
     GLUTEN_FREE
     KETO
+    NON_VEGETARIAN
+    DAIRY_FREE
+    NUT_FREE
+    EGG_FREE
+    LOW_CARB
+    LOW_FAT
+    HIGH_PROTEIN
 }

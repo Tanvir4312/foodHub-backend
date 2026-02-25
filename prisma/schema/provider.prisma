@@ -3,6 +3,7 @@ model ProviderProfile {
     name         String  @db.VarChar(50)
     description  String?
     logo_url     String?
+    isAvailable  Boolean @default(true)
     location     String
     phone_number String? @db.VarChar(15)
     user_id      String  @unique

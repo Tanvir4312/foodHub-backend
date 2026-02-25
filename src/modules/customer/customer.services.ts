@@ -2,6 +2,16 @@ import { count } from "node:console";
 import { Review } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
+const getMyCustomerProfile = async (id: string) => {
+  const customerProfile = await prisma.user.findUnique({
+    where: { id },
+  });
+  if (!customerProfile) {
+    throw new Error("This is not Your profile");
+  }
+  return customerProfile;
+};
+
 const updateCustomerProfile = async (
   id: string,
   payload: {
@@ -56,10 +66,21 @@ const crateCustomerReview = async (
       throw new Error("You have already reviewed this meal.");
     }
 
+    const user = await tx.user.findFirst({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
     const newReview = await tx.review.create({
       data: {
         user_id: userId,
         meal_id: mealId,
+        name: user.name,
         rating: data.rating,
         comment: data.comment,
       },
@@ -84,124 +105,37 @@ const crateCustomerReview = async (
   });
 };
 
-const addToCart = async (userId: string, mealId: string, quyantity: number) => {
+const getCartById = async (userId: string, cartId: string) => {
   return await prisma.$transaction(async (tx) => {
-    const provider = await tx.meal.findUnique({
+    const cart = await tx.cart.findUnique({
       where: {
-        id: mealId,
+        id: cartId,
       },
-    });
-
-    const providerId = provider?.provider_id;
-    if (!providerId) {
-      throw new Error("Meal not found");
-    }
-
-    let cart = await tx.cart.findUnique({
-      where: {
-        user_id_provider_id: { user_id: userId, provider_id: providerId },
-      },
-    });
-
-    if (!cart) {
-      cart = await tx.cart.create({
-        data: {
-          user_id: userId,
-          provider_id: providerId,
-        },
-      });
-    }
-    const total_cart = await tx.cart.count();
-
-    const existingItem = await tx.cartItem.findUnique({
-      where: {
-        cart_id_meal_id: {
-          cart_id: cart.id,
-          meal_id: mealId,
-        },
-      },
-    });
-
-    if (existingItem) {
-      const cartItem = await tx.cartItem.update({
-        where: {
-          id: existingItem.id,
-        },
-        data: {
-          quantity: existingItem.quantity + quyantity,
-        },
-        include: {
-          meal: {
-            select: {
-              name: true,
-              image_url: true,
-              price: true,
-              provider: {
-                select: {
-                  name: true,
-                  logo_url: true,
-                },
+      include: {
+        cartItems: {
+          select: {
+            quantity: true,
+            price: true,
+            meal: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },
         },
-      });
-      return {
-        data: cartItem,
-        total_cart,
-      };
-    } else {
-      const cartItem = await tx.cartItem.create({
-        data: {
-          cart_id: cart.id,
-          meal_id: mealId,
-          quantity: quyantity,
-        },
-        include: {
-          meal: {
-            select: {
-              name: true,
-              image_url: true,
-              price: true,
-              provider: {
-                select: {
-                  name: true,
-                  logo_url: true,
-                },
-              },
-            },
-          },
-        },
-      });
-      return { data: cartItem, total_cart };
-    }
-  });
-};
-
-const getOwnCart = async (id: string) => {
-  return await prisma.cart.findMany({
-    where: {
-      user_id: id,
-    },
-    include: {
-      cartItems: {
-        include: {
-          meal: {
-            select: {
-              name: true,
-              price: true,
-              image_url: true,
-            },
-          },
-        },
       },
-    },
+    });
+    if (cart?.user_id !== userId) {
+      throw new Error("You are not authorized to access this specific cart.");
+    }
+    return cart;
   });
 };
 
 export const customerservices = {
+  getMyCustomerProfile,
   updateCustomerProfile,
   crateCustomerReview,
-  addToCart,
-  getOwnCart,
+  getCartById,
 };

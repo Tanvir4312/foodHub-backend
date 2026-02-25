@@ -1,9 +1,9 @@
-import { Order } from "../../../generated/prisma/client";
 import { OrderStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 
 type OrderPlace = {
   delivery_address: string;
+  phone_number: string;
   items: {
     mealId: string;
     quantity: number;
@@ -11,8 +11,19 @@ type OrderPlace = {
 };
 
 const createOrder = async (payload: OrderPlace, userId: string) => {
-  const { delivery_address, items } = payload;
-  //   console.log(items);
+  const { delivery_address, phone_number, items } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (user?.status === "SUSPENDED") {
+    throw new Error(
+      "We've noticed some unusual activity on your account, and it is currently restricted from placing new orders. Reach out to our help center to resolve this.",
+    );
+  }
 
   //   Get All meal id
   const mealIds = items.map((item) => item.mealId);
@@ -60,15 +71,13 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
       };
     });
 
-    // console.log("orderItemsData", orderItemsData);
-
-    // console.log("meals",meals);
     return await tx.order.create({
       data: {
         user_id: userId,
         provider_id: providerId,
-        total_amount: calculateAmount,
+        total_amount: Math.floor(calculateAmount + 70 + calculateAmount * 0.1),
         delivery_address,
+        phone_number,
         orderItems: {
           create: orderItemsData,
         },
@@ -100,6 +109,7 @@ const getUserOwnOrder = async (userId: string) => {
             select: {
               name: true,
               price: true,
+              image_url : true
             },
           },
         },
@@ -120,6 +130,7 @@ const getOrderById = async (orderId: string) => {
             select: {
               name: true,
               price: true,
+              image_url : true
             },
           },
         },
@@ -130,11 +141,15 @@ const getOrderById = async (orderId: string) => {
 
 const getIncomingOrder = async (userId: string) => {
   return await prisma.$transaction(async (tx) => {
-    const provider = await tx.providerProfile.findUniqueOrThrow({
+    const provider = await tx.providerProfile.findUnique({
       where: {
         user_id: userId,
       },
     });
+
+    if (!provider) {
+      return [];
+    }
 
     const providerId = provider?.id;
 
@@ -198,13 +213,11 @@ const updateOrderStatus = async (
 };
 
 const deleteOrder = async (id: string, userId: string) => {
- 
   const order = await prisma.order.findUnique({
     where: {
       id,
     },
   });
-  
 
   if (!order || order.user_id !== userId) {
     throw new Error("Order not found");

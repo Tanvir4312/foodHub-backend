@@ -1,6 +1,7 @@
 model Category {
-    id        String        @id @default(uuid())
-    name        String @unique @db.VarChar(50)
+    id          String  @id @default(uuid())
+    name        String  @unique @db.VarChar(50)
+    image_url   String?
     description String?
     meals       Meal[]
 

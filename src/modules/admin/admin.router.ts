@@ -10,7 +10,7 @@ router.get("/users", auth(UserRole.ADMIN), adminController.getAllUser);
 
 router.patch("/users/:id", auth(UserRole.ADMIN), adminController.updateUserStatus);
 // --------Categories----------------
-router.get("/categories", auth(UserRole.ADMIN), adminController.getAllCategory);
+
 
 router.post("/categories", auth(UserRole.ADMIN), adminController.createCategories);
 
@@ -26,5 +26,8 @@ router.patch("/orders/:id", auth(UserRole.ADMIN), adminController.updateOrderSta
 // -------meals-------------
 
 router.patch("/meals/:id", auth(UserRole.ADMIN), adminController.mealIsDeleted);
+
+//-------------Stats------------
+router.get("/stats", auth(UserRole.ADMIN), adminController.getStats) 
 
 export const adminRouter = router;
