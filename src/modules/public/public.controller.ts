@@ -179,7 +179,7 @@ const itemDelete = async (req: Request, res: Response) => {
 
   const itemsId = req.params.itemsId;
   try {
-    const result = await publicServices.cartDelete(
+    const result = await publicServices.itemDelete(
 
       itemsId as string,
     );

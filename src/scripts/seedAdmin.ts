@@ -20,16 +20,15 @@ async function seedAdmin() {
       throw new Error("User Exist");
     }
     await fetch("http://localhost:5000/api/auth/sign-up/email", {
-        method : "POST",
-        headers :{
-            "Content-Type" : "application/json",
-             origin: "http://localhost:5000",
-        },
-        body: JSON.stringify(adminData)
-    })
-    
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        origin: "http://localhost:5000",
+      },
+      body: JSON.stringify(adminData),
+    });
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
 }
-seedAdmin()
+seedAdmin();

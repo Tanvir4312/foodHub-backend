@@ -30,6 +30,6 @@ router.get("/cart/count", auth(), publicController.getOwnCartCount);
 
 router.delete("/cart/:cartId", publicController.cartDelete);
 
-router.delete("/cartItem/:itemsId", publicController.cartDelete);
+router.delete("/cartItem/:itemsId", publicController.itemDelete);
 
 export const publicRouter = router;

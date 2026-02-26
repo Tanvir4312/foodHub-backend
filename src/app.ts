@@ -15,9 +15,31 @@ const app: Application = express();
 app.use(
   cors({
     origin: process.env.APP_URL || "http://localhost:3000",
+
     credentials: true,
   }),
 );
+
+// app.use(
+//   cors({
+
+//     origin: (origin, callback) => {
+//       const allowedOrigins = [
+//         "https://foodhub-client-nine.vercel.app",
+//         "http://localhost:3000",
+//       ];
+
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+//   }),
+// );
 
 app.use(express.json());
 

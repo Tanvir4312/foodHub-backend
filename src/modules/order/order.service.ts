@@ -58,10 +58,10 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
       }
 
       const individualOrderTotapPrice = meal.price * item.quantity;
-      //   console.log("alada alada total price", individualOrderTotapPrice);
+   
 
       calculateAmount += meal.price * item.quantity;
-      //   console.log("Meal", meal);
+  
 
       return {
         meal_id: meal.id,

@@ -30,14 +30,14 @@ var init_class = __esm({
       "clientVersion": "7.3.0",
       "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
       "activeProvider": "postgresql",
-      "inlineSchema": 'model User {\n  id              String           @id\n  name            String\n  email           String\n  emailVerified   Boolean          @default(false)\n  phone_number    String?          @db.VarChar(15)\n  image           String?\n  role            UserRole         @default(CUSTOMER)\n  status          UserStatus       @default(ACTIVE)\n  createdAt       DateTime         @default(now())\n  updatedAt       DateTime         @updatedAt\n  sessions        Session[]\n  accounts        Account[]\n  providerProfile ProviderProfile?\n  orders          Order[]\n  reviews         Review[]\n  carts           Cart[]\n\n  @@unique([email])\n  @@map("users")\n}\n\nenum UserRole {\n  CUSTOMER\n  PROVIDER\n  ADMIN\n}\n\nenum UserStatus {\n  ACTIVE\n  SUSPENDED\n}\n\nmodel Session {\n  id        String   @id\n  expiresAt DateTime\n  token     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([token])\n  @@index([userId])\n  @@map("session")\n}\n\nmodel Account {\n  id                    String    @id\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@index([userId])\n  @@map("account")\n}\n\nmodel Verification {\n  id         String   @id\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@index([identifier])\n  @@map("verification")\n}\n\nmodel Cart {\n  id          String          @id @default(ulid())\n  user_id     String\n  user        User            @relation(fields: [user_id], references: [id])\n  provider_id String\n  provider    ProviderProfile @relation(fields: [provider_id], references: [id])\n  cartItems   CartItem[]\n\n  @@unique([user_id, provider_id])\n}\n\nmodel CartItem {\n  id       String @id @default(ulid())\n  cart_id  String\n  cart     Cart   @relation(fields: [cart_id], references: [id], onDelete: Cascade)\n  meal_id  String\n  meal     Meal   @relation(fields: [meal_id], references: [id])\n  quantity Int    @default(1)\n\n  @@unique([cart_id, meal_id])\n}\n\nmodel Category {\n  id          String  @id @default(uuid())\n  name        String  @unique @db.VarChar(50)\n  description String?\n  meals       Meal[]\n\n  @@map("categories")\n}\n\nmodel Meal {\n  id            String            @id @default(uuid())\n  name          String            @db.VarChar(50)\n  description   String\n  price         Float\n  image_url     String?\n  isAvailable   Boolean           @default(true)\n  dietary       DietaryPreference\n  isDeleted     Boolean           @default(false)\n  averageRating Float             @default(0)\n  totalReviews  Float             @default(0)\n  provider_id   String\n  provider      ProviderProfile   @relation(fields: [provider_id], references: [id])\n  category_id   String\n  categories    Category          @relation(fields: [category_id], references: [id])\n  reviews       Review[]\n  orderItems    orderItem[]\n  cartItems     CartItem[]\n\n  @@map("meals")\n}\n\nenum DietaryPreference {\n  VEGAN\n  VEGETARIAN\n  GLUTEN_FREE\n  KETO\n  NON_VEGETARIAN\n  DAIRY_FREE\n  NUT_FREE\n  EGG_FREE\n  LOW_CARB\n  LOW_FAT\n  HIGH_PROTEIN\n}\n\nmodel Order {\n  id               String          @id @default(uuid())\n  total_amount     Float\n  delivery_address String\n  payment_method   String          @default("Cash on delivery(COD)")\n  status           OrderStatus     @default(PENDING)\n  user_id          String\n  user             User            @relation(fields: [user_id], references: [id])\n  provider_id      String\n  provider         ProviderProfile @relation(fields: [provider_id], references: [id])\n  createdAt        DateTime        @default(now())\n  updatedAt        DateTime        @updatedAt\n  orderItems       orderItem[]\n\n  @@map("orders")\n}\n\nenum OrderStatus {\n  PENDING\n  ACCEPTED\n  PREPARING\n  OUTFORDELIVERY\n  DELIVERED\n  CANCELLED\n}\n\nmodel orderItem {\n  id          String @id @default(ulid())\n  order_id    String\n  order       Order  @relation(fields: [order_id], references: [id], onDelete: Cascade)\n  meal_id     String\n  meal        Meal   @relation(fields: [meal_id], references: [id])\n  quantity    Int    @default(1)\n  price       Float\n  total_price Float\n\n  @@map("order-items")\n}\n\nmodel ProviderProfile {\n  id           String  @id @default(uuid())\n  name         String  @db.VarChar(50)\n  description  String?\n  logo_url     String?\n  location     String\n  phone_number String? @db.VarChar(15)\n  user_id      String  @unique\n  user         User    @relation(fields: [user_id], references: [id])\n  meals        Meal[]\n  orders       Order[]\n  carts        Cart[]\n\n  @@map("providersProfile")\n}\n\nmodel Review {\n  id      String @id @default(uuid())\n  rating  Int\n  comment String\n  meal_id String\n  meal    Meal   @relation(fields: [meal_id], references: [id])\n  user_id String\n  user    User   @relation(fields: [user_id], references: [id])\n\n  @@map("reviews")\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../../generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n',
+      "inlineSchema": 'model User {\n  id              String           @id\n  name            String\n  email           String\n  emailVerified   Boolean          @default(false)\n  phone_number    String?          @db.VarChar(15)\n  image           String?\n  role            UserRole         @default(CUSTOMER)\n  status          UserStatus       @default(ACTIVE)\n  createdAt       DateTime         @default(now())\n  updatedAt       DateTime         @updatedAt\n  sessions        Session[]\n  accounts        Account[]\n  providerProfile ProviderProfile?\n  orders          Order[]\n  reviews         Review[]\n  carts           Cart[]\n\n  @@unique([email])\n  @@map("users")\n}\n\nenum UserRole {\n  CUSTOMER\n  PROVIDER\n  ADMIN\n}\n\nenum UserStatus {\n  ACTIVE\n  INACTIVE\n  SUSPENDED\n}\n\nmodel Session {\n  id        String   @id\n  expiresAt DateTime\n  token     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([token])\n  @@index([userId])\n  @@map("session")\n}\n\nmodel Account {\n  id                    String    @id\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@index([userId])\n  @@map("account")\n}\n\nmodel Verification {\n  id         String   @id\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@index([identifier])\n  @@map("verification")\n}\n\nmodel Cart {\n  id          String          @id @default(ulid())\n  user_id     String\n  user        User            @relation(fields: [user_id], references: [id])\n  provider_id String\n  provider    ProviderProfile @relation(fields: [provider_id], references: [id])\n  cartItems   CartItem[]\n\n  @@unique([user_id, provider_id])\n}\n\nmodel CartItem {\n  id       String @id @default(ulid())\n  cart_id  String\n  cart     Cart   @relation(fields: [cart_id], references: [id], onDelete: Cascade)\n  meal_id  String\n  meal     Meal   @relation(fields: [meal_id], references: [id])\n  quantity Int    @default(1)\n  price    Float\n\n  @@unique([cart_id, meal_id])\n}\n\nmodel Category {\n  id          String  @id @default(uuid())\n  name        String  @unique @db.VarChar(50)\n  image_url   String?\n  description String?\n  meals       Meal[]\n\n  @@map("categories")\n}\n\nmodel Meal {\n  id            String            @id @default(uuid())\n  name          String            @db.VarChar(50)\n  description   String\n  price         Float\n  image_url     String?\n  isAvailable   Boolean           @default(true)\n  dietary       DietaryPreference\n  isDeleted     Boolean           @default(false)\n  averageRating Float             @default(0)\n  totalReviews  Float             @default(0)\n  provider_id   String\n  provider      ProviderProfile   @relation(fields: [provider_id], references: [id])\n  category_id   String\n  categories    Category          @relation(fields: [category_id], references: [id], onDelete: Cascade)\n  reviews       Review[]\n  orderItems    orderItem[]\n  cartItems     CartItem[]\n\n  @@map("meals")\n}\n\nenum DietaryPreference {\n  VEGAN\n  VEGETARIAN\n  GLUTEN_FREE\n  KETO\n  NON_VEGETARIAN\n  DAIRY_FREE\n  NUT_FREE\n  EGG_FREE\n  LOW_CARB\n  LOW_FAT\n  HIGH_PROTEIN\n}\n\nmodel Order {\n  id               String          @id @default(uuid())\n  total_amount     Float\n  delivery_address String\n  payment_method   String          @default("Cash on delivery(COD)")\n  status           OrderStatus     @default(PENDING)\n  phone_number     String          @default("")\n  user_id          String\n  user             User            @relation(fields: [user_id], references: [id])\n  provider_id      String\n  provider         ProviderProfile @relation(fields: [provider_id], references: [id])\n  createdAt        DateTime        @default(now())\n  updatedAt        DateTime        @updatedAt\n  orderItems       orderItem[]\n\n  @@map("orders")\n}\n\nenum OrderStatus {\n  PENDING\n  ACCEPTED\n  PREPARING\n  OUTFORDELIVERY\n  DELIVERED\n  CANCELLED\n}\n\nmodel orderItem {\n  id          String @id @default(ulid())\n  order_id    String\n  order       Order  @relation(fields: [order_id], references: [id], onDelete: Cascade)\n  meal_id     String\n  meal        Meal   @relation(fields: [meal_id], references: [id])\n  quantity    Int    @default(1)\n  price       Float\n  total_price Float\n\n  @@map("order-items")\n}\n\nmodel ProviderProfile {\n  id           String  @id @default(uuid())\n  name         String  @db.VarChar(50)\n  description  String?\n  logo_url     String?\n  isAvailable  Boolean @default(true)\n  location     String\n  phone_number String? @db.VarChar(15)\n  user_id      String  @unique\n  user         User    @relation(fields: [user_id], references: [id])\n  meals        Meal[]\n  orders       Order[]\n  carts        Cart[]\n\n  @@map("providersProfile")\n}\n\nmodel Review {\n  id      String @id @default(uuid())\n  name    String @default("")\n  rating  Int\n  comment String\n  meal_id String\n  meal    Meal   @relation(fields: [meal_id], references: [id], onDelete: Cascade)\n  user_id String\n  user    User   @relation(fields: [user_id], references: [id])\n\n  @@map("reviews")\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../../generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n',
       "runtimeDataModel": {
         "models": {},
         "enums": {},
         "types": {}
       }
     };
-    config.runtimeDataModel = JSON.parse('{"models":{"User":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"email","kind":"scalar","type":"String"},{"name":"emailVerified","kind":"scalar","type":"Boolean"},{"name":"phone_number","kind":"scalar","type":"String"},{"name":"image","kind":"scalar","type":"String"},{"name":"role","kind":"enum","type":"UserRole"},{"name":"status","kind":"enum","type":"UserStatus"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"},{"name":"sessions","kind":"object","type":"Session","relationName":"SessionToUser"},{"name":"accounts","kind":"object","type":"Account","relationName":"AccountToUser"},{"name":"providerProfile","kind":"object","type":"ProviderProfile","relationName":"ProviderProfileToUser"},{"name":"orders","kind":"object","type":"Order","relationName":"OrderToUser"},{"name":"reviews","kind":"object","type":"Review","relationName":"ReviewToUser"},{"name":"carts","kind":"object","type":"Cart","relationName":"CartToUser"}],"dbName":"users"},"Session":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"expiresAt","kind":"scalar","type":"DateTime"},{"name":"token","kind":"scalar","type":"String"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"},{"name":"ipAddress","kind":"scalar","type":"String"},{"name":"userAgent","kind":"scalar","type":"String"},{"name":"userId","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"SessionToUser"}],"dbName":"session"},"Account":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"accountId","kind":"scalar","type":"String"},{"name":"providerId","kind":"scalar","type":"String"},{"name":"userId","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"AccountToUser"},{"name":"accessToken","kind":"scalar","type":"String"},{"name":"refreshToken","kind":"scalar","type":"String"},{"name":"idToken","kind":"scalar","type":"String"},{"name":"accessTokenExpiresAt","kind":"scalar","type":"DateTime"},{"name":"refreshTokenExpiresAt","kind":"scalar","type":"DateTime"},{"name":"scope","kind":"scalar","type":"String"},{"name":"password","kind":"scalar","type":"String"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"}],"dbName":"account"},"Verification":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"identifier","kind":"scalar","type":"String"},{"name":"value","kind":"scalar","type":"String"},{"name":"expiresAt","kind":"scalar","type":"DateTime"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"}],"dbName":"verification"},"Cart":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"CartToUser"},{"name":"provider_id","kind":"scalar","type":"String"},{"name":"provider","kind":"object","type":"ProviderProfile","relationName":"CartToProviderProfile"},{"name":"cartItems","kind":"object","type":"CartItem","relationName":"CartToCartItem"}],"dbName":null},"CartItem":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"cart_id","kind":"scalar","type":"String"},{"name":"cart","kind":"object","type":"Cart","relationName":"CartToCartItem"},{"name":"meal_id","kind":"scalar","type":"String"},{"name":"meal","kind":"object","type":"Meal","relationName":"CartItemToMeal"},{"name":"quantity","kind":"scalar","type":"Int"}],"dbName":null},"Category":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"description","kind":"scalar","type":"String"},{"name":"meals","kind":"object","type":"Meal","relationName":"CategoryToMeal"}],"dbName":"categories"},"Meal":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"description","kind":"scalar","type":"String"},{"name":"price","kind":"scalar","type":"Float"},{"name":"image_url","kind":"scalar","type":"String"},{"name":"isAvailable","kind":"scalar","type":"Boolean"},{"name":"dietary","kind":"enum","type":"DietaryPreference"},{"name":"isDeleted","kind":"scalar","type":"Boolean"},{"name":"averageRating","kind":"scalar","type":"Float"},{"name":"totalReviews","kind":"scalar","type":"Float"},{"name":"provider_id","kind":"scalar","type":"String"},{"name":"provider","kind":"object","type":"ProviderProfile","relationName":"MealToProviderProfile"},{"name":"category_id","kind":"scalar","type":"String"},{"name":"categories","kind":"object","type":"Category","relationName":"CategoryToMeal"},{"name":"reviews","kind":"object","type":"Review","relationName":"MealToReview"},{"name":"orderItems","kind":"object","type":"orderItem","relationName":"MealToorderItem"},{"name":"cartItems","kind":"object","type":"CartItem","relationName":"CartItemToMeal"}],"dbName":"meals"},"Order":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"total_amount","kind":"scalar","type":"Float"},{"name":"delivery_address","kind":"scalar","type":"String"},{"name":"payment_method","kind":"scalar","type":"String"},{"name":"status","kind":"enum","type":"OrderStatus"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"OrderToUser"},{"name":"provider_id","kind":"scalar","type":"String"},{"name":"provider","kind":"object","type":"ProviderProfile","relationName":"OrderToProviderProfile"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"},{"name":"orderItems","kind":"object","type":"orderItem","relationName":"OrderToorderItem"}],"dbName":"orders"},"orderItem":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"order_id","kind":"scalar","type":"String"},{"name":"order","kind":"object","type":"Order","relationName":"OrderToorderItem"},{"name":"meal_id","kind":"scalar","type":"String"},{"name":"meal","kind":"object","type":"Meal","relationName":"MealToorderItem"},{"name":"quantity","kind":"scalar","type":"Int"},{"name":"price","kind":"scalar","type":"Float"},{"name":"total_price","kind":"scalar","type":"Float"}],"dbName":"order-items"},"ProviderProfile":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"description","kind":"scalar","type":"String"},{"name":"logo_url","kind":"scalar","type":"String"},{"name":"location","kind":"scalar","type":"String"},{"name":"phone_number","kind":"scalar","type":"String"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"ProviderProfileToUser"},{"name":"meals","kind":"object","type":"Meal","relationName":"MealToProviderProfile"},{"name":"orders","kind":"object","type":"Order","relationName":"OrderToProviderProfile"},{"name":"carts","kind":"object","type":"Cart","relationName":"CartToProviderProfile"}],"dbName":"providersProfile"},"Review":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"rating","kind":"scalar","type":"Int"},{"name":"comment","kind":"scalar","type":"String"},{"name":"meal_id","kind":"scalar","type":"String"},{"name":"meal","kind":"object","type":"Meal","relationName":"MealToReview"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"ReviewToUser"}],"dbName":"reviews"}},"enums":{},"types":{}}');
+    config.runtimeDataModel = JSON.parse('{"models":{"User":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"email","kind":"scalar","type":"String"},{"name":"emailVerified","kind":"scalar","type":"Boolean"},{"name":"phone_number","kind":"scalar","type":"String"},{"name":"image","kind":"scalar","type":"String"},{"name":"role","kind":"enum","type":"UserRole"},{"name":"status","kind":"enum","type":"UserStatus"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"},{"name":"sessions","kind":"object","type":"Session","relationName":"SessionToUser"},{"name":"accounts","kind":"object","type":"Account","relationName":"AccountToUser"},{"name":"providerProfile","kind":"object","type":"ProviderProfile","relationName":"ProviderProfileToUser"},{"name":"orders","kind":"object","type":"Order","relationName":"OrderToUser"},{"name":"reviews","kind":"object","type":"Review","relationName":"ReviewToUser"},{"name":"carts","kind":"object","type":"Cart","relationName":"CartToUser"}],"dbName":"users"},"Session":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"expiresAt","kind":"scalar","type":"DateTime"},{"name":"token","kind":"scalar","type":"String"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"},{"name":"ipAddress","kind":"scalar","type":"String"},{"name":"userAgent","kind":"scalar","type":"String"},{"name":"userId","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"SessionToUser"}],"dbName":"session"},"Account":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"accountId","kind":"scalar","type":"String"},{"name":"providerId","kind":"scalar","type":"String"},{"name":"userId","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"AccountToUser"},{"name":"accessToken","kind":"scalar","type":"String"},{"name":"refreshToken","kind":"scalar","type":"String"},{"name":"idToken","kind":"scalar","type":"String"},{"name":"accessTokenExpiresAt","kind":"scalar","type":"DateTime"},{"name":"refreshTokenExpiresAt","kind":"scalar","type":"DateTime"},{"name":"scope","kind":"scalar","type":"String"},{"name":"password","kind":"scalar","type":"String"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"}],"dbName":"account"},"Verification":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"identifier","kind":"scalar","type":"String"},{"name":"value","kind":"scalar","type":"String"},{"name":"expiresAt","kind":"scalar","type":"DateTime"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"}],"dbName":"verification"},"Cart":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"CartToUser"},{"name":"provider_id","kind":"scalar","type":"String"},{"name":"provider","kind":"object","type":"ProviderProfile","relationName":"CartToProviderProfile"},{"name":"cartItems","kind":"object","type":"CartItem","relationName":"CartToCartItem"}],"dbName":null},"CartItem":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"cart_id","kind":"scalar","type":"String"},{"name":"cart","kind":"object","type":"Cart","relationName":"CartToCartItem"},{"name":"meal_id","kind":"scalar","type":"String"},{"name":"meal","kind":"object","type":"Meal","relationName":"CartItemToMeal"},{"name":"quantity","kind":"scalar","type":"Int"},{"name":"price","kind":"scalar","type":"Float"}],"dbName":null},"Category":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"image_url","kind":"scalar","type":"String"},{"name":"description","kind":"scalar","type":"String"},{"name":"meals","kind":"object","type":"Meal","relationName":"CategoryToMeal"}],"dbName":"categories"},"Meal":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"description","kind":"scalar","type":"String"},{"name":"price","kind":"scalar","type":"Float"},{"name":"image_url","kind":"scalar","type":"String"},{"name":"isAvailable","kind":"scalar","type":"Boolean"},{"name":"dietary","kind":"enum","type":"DietaryPreference"},{"name":"isDeleted","kind":"scalar","type":"Boolean"},{"name":"averageRating","kind":"scalar","type":"Float"},{"name":"totalReviews","kind":"scalar","type":"Float"},{"name":"provider_id","kind":"scalar","type":"String"},{"name":"provider","kind":"object","type":"ProviderProfile","relationName":"MealToProviderProfile"},{"name":"category_id","kind":"scalar","type":"String"},{"name":"categories","kind":"object","type":"Category","relationName":"CategoryToMeal"},{"name":"reviews","kind":"object","type":"Review","relationName":"MealToReview"},{"name":"orderItems","kind":"object","type":"orderItem","relationName":"MealToorderItem"},{"name":"cartItems","kind":"object","type":"CartItem","relationName":"CartItemToMeal"}],"dbName":"meals"},"Order":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"total_amount","kind":"scalar","type":"Float"},{"name":"delivery_address","kind":"scalar","type":"String"},{"name":"payment_method","kind":"scalar","type":"String"},{"name":"status","kind":"enum","type":"OrderStatus"},{"name":"phone_number","kind":"scalar","type":"String"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"OrderToUser"},{"name":"provider_id","kind":"scalar","type":"String"},{"name":"provider","kind":"object","type":"ProviderProfile","relationName":"OrderToProviderProfile"},{"name":"createdAt","kind":"scalar","type":"DateTime"},{"name":"updatedAt","kind":"scalar","type":"DateTime"},{"name":"orderItems","kind":"object","type":"orderItem","relationName":"OrderToorderItem"}],"dbName":"orders"},"orderItem":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"order_id","kind":"scalar","type":"String"},{"name":"order","kind":"object","type":"Order","relationName":"OrderToorderItem"},{"name":"meal_id","kind":"scalar","type":"String"},{"name":"meal","kind":"object","type":"Meal","relationName":"MealToorderItem"},{"name":"quantity","kind":"scalar","type":"Int"},{"name":"price","kind":"scalar","type":"Float"},{"name":"total_price","kind":"scalar","type":"Float"}],"dbName":"order-items"},"ProviderProfile":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"description","kind":"scalar","type":"String"},{"name":"logo_url","kind":"scalar","type":"String"},{"name":"isAvailable","kind":"scalar","type":"Boolean"},{"name":"location","kind":"scalar","type":"String"},{"name":"phone_number","kind":"scalar","type":"String"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"ProviderProfileToUser"},{"name":"meals","kind":"object","type":"Meal","relationName":"MealToProviderProfile"},{"name":"orders","kind":"object","type":"Order","relationName":"OrderToProviderProfile"},{"name":"carts","kind":"object","type":"Cart","relationName":"CartToProviderProfile"}],"dbName":"providersProfile"},"Review":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"rating","kind":"scalar","type":"Int"},{"name":"comment","kind":"scalar","type":"String"},{"name":"meal_id","kind":"scalar","type":"String"},{"name":"meal","kind":"object","type":"Meal","relationName":"MealToReview"},{"name":"user_id","kind":"scalar","type":"String"},{"name":"user","kind":"object","type":"User","relationName":"ReviewToUser"}],"dbName":"reviews"}},"enums":{},"types":{}}');
     config.compilerWasm = {
       getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.mjs"),
       getQueryCompilerWasmModule: async () => {
@@ -191,11 +191,13 @@ var init_prismaNamespace = __esm({
       id: "id",
       cart_id: "cart_id",
       meal_id: "meal_id",
-      quantity: "quantity"
+      quantity: "quantity",
+      price: "price"
     };
     CategoryScalarFieldEnum = {
       id: "id",
       name: "name",
+      image_url: "image_url",
       description: "description"
     };
     MealScalarFieldEnum = {
@@ -218,6 +220,7 @@ var init_prismaNamespace = __esm({
       delivery_address: "delivery_address",
       payment_method: "payment_method",
       status: "status",
+      phone_number: "phone_number",
       user_id: "user_id",
       provider_id: "provider_id",
       createdAt: "createdAt",
@@ -236,12 +239,14 @@ var init_prismaNamespace = __esm({
       name: "name",
       description: "description",
       logo_url: "logo_url",
+      isAvailable: "isAvailable",
       location: "location",
       phone_number: "phone_number",
       user_id: "user_id"
     };
     ReviewScalarFieldEnum = {
       id: "id",
+      name: "name",
       rating: "rating",
       comment: "comment",
       meal_id: "meal_id",
@@ -319,6 +324,17 @@ var init_auth = __esm({
         provider: "postgresql"
       }),
       trustedOrigins: [process.env.APP_URL],
+      cookies: {
+        session_token: {
+          attributes: {
+            sameSite: "None",
+            secure: true,
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * 7
+          }
+        }
+      },
+      // -------------------------
       user: {
         additionalFields: {
           role: {
@@ -346,7 +362,7 @@ var init_auth = __esm({
 });
 
 // src/modules/admin/admin.service.ts
-var getAllUser, updateUserStatus, createCategories, getAllCategory, updateCategory, deleteCategory, getAllOrder, updateOrderStatus, mealIsDeleted, adminServices;
+var getAllUser, updateUserStatus, createCategories, updateCategory, deleteCategory, getAllOrder, updateOrderStatus, mealIsDeleted, getStats, adminServices;
 var init_admin_service = __esm({
   "src/modules/admin/admin.service.ts"() {
     "use strict";
@@ -377,15 +393,6 @@ var init_admin_service = __esm({
         data: category
       });
       return createCategory;
-    };
-    getAllCategory = async () => {
-      const allCategory = await prisma.category.findMany({
-        include: {
-          meals: true
-        }
-      });
-      const totalCategory = await prisma.category.count();
-      return { data: allCategory, totalCategory };
     };
     updateCategory = async (id, data) => {
       const categoryUpdate = await prisma.category.update({
@@ -442,22 +449,121 @@ var init_admin_service = __esm({
         }
       });
     };
+    getStats = async (userId) => {
+      return await prisma.$transaction(async (tx) => {
+        const isAdmin = await tx.user.findUnique({
+          where: {
+            id: userId
+          }
+        });
+        if (!isAdmin) {
+          throw new Error("Forbidden");
+        }
+        const userCount = await tx.user.count();
+        const activeUser = await tx.user.count({
+          where: {
+            status: "ACTIVE"
+          }
+        });
+        const suspendedUser = await tx.user.count({
+          where: {
+            status: "SUSPENDED"
+          }
+        });
+        const totalRevenue = await tx.order.aggregate({
+          _sum: {
+            total_amount: true
+          },
+          where: {
+            status: "DELIVERED"
+          }
+        });
+        const averageOrderValue = await tx.order.aggregate({
+          _avg: {
+            total_amount: true
+          }
+        });
+        const now = /* @__PURE__ */ new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthlyAov = await tx.order.aggregate({
+          where: {
+            status: "DELIVERED",
+            createdAt: {
+              gte: startOfMonth
+            }
+          },
+          _avg: {
+            total_amount: true
+          }
+        });
+        const totalDeliveredOrder = await tx.order.count({
+          where: {
+            status: "DELIVERED"
+          }
+        });
+        const totalPendingOrder = await tx.order.count({
+          where: {
+            status: "PENDING"
+          }
+        });
+        const totalCanclledOrder = await tx.order.count({
+          where: {
+            status: "CANCELLED"
+          }
+        });
+        const activeProvider = await tx.providerProfile.count({
+          where: {
+            isAvailable: true
+          }
+        });
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1e3);
+        const newSingUps24H = await tx.user.count({
+          where: {
+            createdAt: {
+              gte: twentyFourHoursAgo
+            }
+          }
+        });
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3);
+        const newSignUps7D = await tx.user.count({
+          where: {
+            createdAt: {
+              gte: oneWeekAgo
+            }
+          }
+        });
+        return {
+          active_user: activeUser,
+          supended_user: suspendedUser,
+          total_user: userCount,
+          total_revenue: totalRevenue,
+          average_order_value: averageOrderValue,
+          monthly_AOV: monthlyAov,
+          total_delivered: totalDeliveredOrder,
+          pending_orders: totalPendingOrder,
+          cancleed_orders: totalCanclledOrder,
+          active_providers: activeProvider,
+          last_24H_singups: newSingUps24H,
+          last_7D_singups: newSignUps7D
+        };
+      });
+    };
     adminServices = {
       getAllUser,
       updateUserStatus,
       createCategories,
-      getAllCategory,
       updateCategory,
       deleteCategory,
       getAllOrder,
       updateOrderStatus,
-      mealIsDeleted
+      mealIsDeleted,
+      getStats
     };
   }
 });
 
 // src/modules/admin/admin.controller.ts
-var getAllUser2, updateUserStatus2, createCategories2, getAllCategory2, updateCategories, deleteCategories, getAllOrder2, updateOrderStatus2, mealIsDeleted2, adminController;
+var getAllUser2, updateUserStatus2, createCategories2, updateCategories, deleteCategories, getAllOrder2, updateOrderStatus2, mealIsDeleted2, getStats2, adminController;
 var init_admin_controller = __esm({
   "src/modules/admin/admin.controller.ts"() {
     "use strict";
@@ -491,16 +597,6 @@ var init_admin_controller = __esm({
     createCategories2 = async (req, res) => {
       try {
         const result = await adminServices.createCategories(req.body);
-        res.status(200).json(result);
-      } catch (e) {
-        res.status(404).json({
-          message: e.message || "An unexpected error occurred"
-        });
-      }
-    };
-    getAllCategory2 = async (req, res) => {
-      try {
-        const result = await adminServices.getAllCategory();
         res.status(200).json(result);
       } catch (e) {
         res.status(404).json({
@@ -561,16 +657,27 @@ var init_admin_controller = __esm({
         });
       }
     };
+    getStats2 = async (req, res) => {
+      const id = req.user?.id;
+      try {
+        const result = await adminServices.getStats(id);
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
     adminController = {
       getAllUser: getAllUser2,
       updateUserStatus: updateUserStatus2,
       createCategories: createCategories2,
-      getAllCategory: getAllCategory2,
       updateCategories,
       deleteCategories,
       getAllOrder: getAllOrder2,
       updateOrderStatus: updateOrderStatus2,
-      mealIsDeleted: mealIsDeleted2
+      mealIsDeleted: mealIsDeleted2,
+      getStats: getStats2
     };
   }
 });
@@ -627,13 +734,13 @@ var init_admin_router = __esm({
     router = Router();
     router.get("/users", auth_middleware_default(UserRole.ADMIN), adminController.getAllUser);
     router.patch("/users/:id", auth_middleware_default(UserRole.ADMIN), adminController.updateUserStatus);
-    router.get("/categories", adminController.getAllCategory);
     router.post("/categories", auth_middleware_default(UserRole.ADMIN), adminController.createCategories);
     router.patch("/categories/:id", auth_middleware_default(UserRole.ADMIN), adminController.updateCategories);
     router.delete("/categories/:id", auth_middleware_default(UserRole.ADMIN), adminController.deleteCategories);
     router.get("/orders", auth_middleware_default(UserRole.ADMIN), adminController.getAllOrder);
     router.patch("/orders/:id", auth_middleware_default(UserRole.ADMIN), adminController.updateOrderStatus);
     router.patch("/meals/:id", auth_middleware_default(UserRole.ADMIN), adminController.mealIsDeleted);
+    router.get("/stats", auth_middleware_default(UserRole.ADMIN), adminController.getStats);
     adminRouter = router;
   }
 });
@@ -668,7 +775,7 @@ var init_globalErrorHandler = __esm({
 });
 
 // src/modules/provider/provider.service.ts
-var createProviderProfile, getAllProvider, getProviderById, getAllMeal, getProviderOwnMeals, getMealsById, createMeals, updateMeals, deleteMeals, providerServices;
+var createProviderProfile, updateProviderOwnProfile, getProviderOwnMeals, createMeals, updateMeals, deleteMeals, getStates, providerServices;
 var init_provider_service = __esm({
   "src/modules/provider/provider.service.ts"() {
     "use strict";
@@ -682,90 +789,27 @@ var init_provider_service = __esm({
       });
       return result;
     };
-    getAllProvider = async () => {
-      return await prisma.providerProfile.findMany({
-        include: {
-          meals: {
-            include: {
-              categories: {
-                select: {
-                  name: true
-                }
-              }
-            }
-          }
-        }
-      });
-    };
-    getProviderById = async (id) => {
-      return await prisma.providerProfile.findUniqueOrThrow({
-        where: {
-          id
-        },
-        include: {
-          meals: {
-            include: {
-              categories: {
-                select: {
-                  name: true
-                }
-              }
-            }
-          }
-        }
-      });
-    };
-    getAllMeal = async (search, minPrice, maxPrice) => {
-      const andCondition = [];
-      if (search) {
-        andCondition.push({
-          OR: [
-            {
-              categories: {
-                name: {
-                  contains: search,
-                  mode: "insensitive"
-                }
-              }
-            },
-            {
-              name: {
-                contains: search,
-                mode: "insensitive"
-              }
-            }
-          ]
-        });
-      }
-      if (minPrice || maxPrice) {
-        andCondition.push({
-          price: {
-            ...minPrice && { gte: minPrice },
-            ...maxPrice && { lte: maxPrice }
+    updateProviderOwnProfile = async (userId, id, providerData) => {
+      return await prisma.$transaction(async (tx) => {
+        const ownProfile = await tx.providerProfile.findUnique({
+          where: {
+            user_id: userId
           }
         });
-      }
-      const result = await prisma.meal.findMany({
-        where: andCondition.length > 0 ? {
-          AND: [...andCondition, { isAvailable: true, isDeleted: false }]
-        } : { isAvailable: true, isDeleted: false },
-        include: {
-          categories: {
-            select: {
-              name: true,
-              description: true
-            }
+        if (!ownProfile) {
+          throw new Error("Your profile not found");
+        }
+        const providerOwnId = ownProfile.id;
+        if (providerOwnId !== id) {
+          throw new Error("You can't upadate other's profile.");
+        }
+        return await tx.providerProfile.update({
+          where: {
+            id: providerOwnId
           },
-          reviews: {
-            select: {
-              comment: true,
-              rating: true,
-              user_id: true
-            }
-          }
-        }
+          data: providerData
+        });
       });
-      return result;
     };
     getProviderOwnMeals = async (userId) => {
       return await prisma.$transaction(async (tx) => {
@@ -793,20 +837,6 @@ var init_provider_service = __esm({
         });
       });
     };
-    getMealsById = async (id) => {
-      return await prisma.meal.findUniqueOrThrow({
-        where: {
-          id
-        },
-        include: {
-          categories: {
-            select: {
-              name: true
-            }
-          }
-        }
-      });
-    };
     createMeals = async (payload, userId) => {
       return await prisma.$transaction(async (tx) => {
         const provider = await tx.providerProfile.findUnique({
@@ -814,12 +844,12 @@ var init_provider_service = __esm({
             user_id: userId
           }
         });
-        const providerId = provider?.id;
-        if (!providerId) {
+        if (!provider) {
           throw new Error(
             "Provider profile not found. Please complete your provider profile first."
           );
         }
+        const providerId = provider?.id;
         await prisma.providerProfile.findFirstOrThrow({
           where: {
             id: providerId
@@ -827,11 +857,23 @@ var init_provider_service = __esm({
         });
         await prisma.category.findFirstOrThrow({
           where: {
-            id: payload.category_id
+            name: payload.category_name
           }
         });
         const result = await prisma.meal.create({
-          data: { ...payload, provider_id: providerId },
+          data: {
+            name: payload.name,
+            description: payload.description,
+            price: payload.price,
+            dietary: payload.dietary,
+            image_url: payload.image_url || null,
+            provider: {
+              connect: { id: providerId }
+            },
+            categories: {
+              connect: { name: payload.category_name }
+            }
+          },
           include: {
             categories: {
               select: {
@@ -861,13 +903,10 @@ var init_provider_service = __esm({
         if (!matched) {
           throw new Error("This is not your meal");
         }
-        const mathedId = matched?.id;
-        if (!mathedId) {
-          throw new Error("Not Found");
-        }
+        const matchedId = matched?.id;
         return await tx.meal.update({
           where: {
-            id: mathedId
+            id: matchedId
           },
           data: mealsData
         });
@@ -881,22 +920,74 @@ var init_provider_service = __esm({
       });
       return result;
     };
+    getStates = async (id) => {
+      return await prisma.$transaction(async (tx) => {
+        const provider = await tx.providerProfile.findUnique({
+          where: {
+            user_id: id
+          }
+        });
+        if (!provider) {
+          throw new Error("unauthorized");
+        }
+        const providerId = provider.id;
+        const totalOrders = await tx.order.count({
+          where: {
+            provider_id: providerId
+          }
+        });
+        const totalActiveOrder = await tx.order.count({
+          where: {
+            provider_id: providerId,
+            status: { in: ["ACCEPTED", "PREPARING", "OUTFORDELIVERY"] }
+          }
+        });
+        const totalDeliveredOrder = await tx.order.count({
+          where: {
+            provider_id: providerId,
+            status: "DELIVERED"
+          }
+        });
+        const revenueData = await tx.order.aggregate({
+          where: {
+            provider_id: providerId,
+            status: "DELIVERED"
+          },
+          _sum: {
+            total_amount: true
+          }
+        });
+        const totalMeals = await tx.meal.count({
+          where: {
+            provider_id: providerId
+          }
+        });
+        return {
+          success: true,
+          data: {
+            totalOrders,
+            totalActiveOrder,
+            totalDeliveredOrder,
+            revenueData,
+            totalMeals
+          }
+        };
+      });
+    };
     providerServices = {
       createProviderProfile,
-      getAllProvider,
-      getProviderById,
-      getAllMeal,
+      updateProviderOwnProfile,
       getProviderOwnMeals,
-      getMealsById,
       createMeals,
       updateMeals,
-      deleteMeals
+      deleteMeals,
+      getStates
     };
   }
 });
 
 // src/modules/provider/provider.controller.ts
-var createProviderProfile2, getAllProvider2, getProviderById2, getAllMeal2, getProviderOwnMeals2, getMealsById2, createMeals2, updateMeals2, deleteMeals2, providerController;
+var createProviderProfile2, updateProviderOwnProfile2, getProviderOwnMeals2, createMeals2, updateMeals2, deleteMeals2, getStats3, providerController;
 var init_provider_controller = __esm({
   "src/modules/provider/provider.controller.ts"() {
     "use strict";
@@ -921,44 +1012,17 @@ var init_provider_controller = __esm({
         next(e);
       }
     };
-    getAllProvider2 = async (req, res) => {
-      try {
-        const allProvider = await providerServices.getAllProvider();
-        res.status(200).json(allProvider);
-      } catch (e) {
-        res.status(404).json({
-          message: "Provider not found",
-          error: e
-        });
-      }
-    };
-    getProviderById2 = async (req, res) => {
+    updateProviderOwnProfile2 = async (req, res) => {
+      const userId = req.user?.id;
       const id = req.params.id;
+      const providerData = req.body;
       try {
-        const getSpecificProvider = await providerServices.getProviderById(
-          id
+        const providerOwnProfile = await providerServices.updateProviderOwnProfile(
+          userId,
+          id,
+          providerData
         );
-        res.status(200).json(getSpecificProvider);
-      } catch (e) {
-        res.status(404).json({
-          message: "Provider not found",
-          error: e
-        });
-      }
-    };
-    getAllMeal2 = async (req, res) => {
-      const search = req.query.search;
-      const minPriceStr = req.query.minPrice;
-      const maxPriceStr = req.query.maxPrice;
-      const minPrice = Number(minPriceStr);
-      const maxPrice = Number(maxPriceStr);
-      try {
-        const mealsCreate = await providerServices.getAllMeal(
-          search,
-          minPrice,
-          maxPrice
-        );
-        res.status(200).json(mealsCreate);
+        res.status(200).json(providerOwnProfile);
       } catch (e) {
         res.status(404).json({
           message: e.message || "An unexpected error occurred"
@@ -978,17 +1042,6 @@ var init_provider_controller = __esm({
         });
       }
     };
-    getMealsById2 = async (req, res) => {
-      const id = req.params.id;
-      try {
-        const mealDetails = await providerServices.getMealsById(id);
-        res.status(200).json(mealDetails);
-      } catch (e) {
-        res.status(404).json({
-          message: e.message || "An unexpected error occurred"
-        });
-      }
-    };
     createMeals2 = async (req, res, next) => {
       const id = req.user?.id;
       try {
@@ -998,6 +1051,9 @@ var init_provider_controller = __esm({
         );
         res.status(200).json(mealsCreate);
       } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
         if (e.code === "P2025") {
           e.message = "Missing required fields: name, price, or category.";
         } else {
@@ -1031,16 +1087,25 @@ var init_provider_controller = __esm({
         next(e);
       }
     };
+    getStats3 = async (req, res) => {
+      const id = req?.user?.id;
+      try {
+        const mealsDelete = await providerServices.getStates(id);
+        res.status(200).json(mealsDelete);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
     providerController = {
       createProviderProfile: createProviderProfile2,
-      getAllProvider: getAllProvider2,
-      getProviderById: getProviderById2,
-      getAllMeal: getAllMeal2,
+      updateProviderOwnProfile: updateProviderOwnProfile2,
       getProviderOwnMeals: getProviderOwnMeals2,
-      getMealsById: getMealsById2,
       createMeals: createMeals2,
       updateMeals: updateMeals2,
-      deleteMeals: deleteMeals2
+      deleteMeals: deleteMeals2,
+      getStats: getStats3
     };
   }
 });
@@ -1055,19 +1120,37 @@ var init_provider_router = __esm({
     init_auth_middleware();
     init_enums();
     router2 = Router2();
-    router2.get("/providers", providerController.getAllProvider);
-    router2.get("/providers/:id", providerController.getProviderById);
     router2.post(
       "/provider-profile",
       auth_middleware_default(UserRole.PROVIDER),
       providerController.createProviderProfile
     );
-    router2.get("/meals", providerController.getAllMeal);
-    router2.get("/meals/own-meals", auth_middleware_default(UserRole.PROVIDER), providerController.getProviderOwnMeals);
-    router2.get("/meals/:id", providerController.getMealsById);
+    router2.put(
+      "/provider-profile/:id",
+      auth_middleware_default(UserRole.PROVIDER),
+      providerController.updateProviderOwnProfile
+    );
+    router2.get(
+      "/meals/own-meals",
+      auth_middleware_default(UserRole.PROVIDER),
+      providerController.getProviderOwnMeals
+    );
     router2.post("/meals", auth_middleware_default(UserRole.PROVIDER), providerController.createMeals);
-    router2.put("/meals/:id", auth_middleware_default(UserRole.PROVIDER), providerController.updateMeals);
-    router2.delete("/meals/:id", auth_middleware_default(UserRole.PROVIDER), providerController.deleteMeals);
+    router2.put(
+      "/meals/:id",
+      auth_middleware_default(UserRole.PROVIDER),
+      providerController.updateMeals
+    );
+    router2.delete(
+      "/meals/:id",
+      auth_middleware_default(UserRole.PROVIDER),
+      providerController.deleteMeals
+    );
+    router2.get(
+      "/stats",
+      auth_middleware_default(UserRole.PROVIDER),
+      providerController.getStats
+    );
     providerRouter = router2;
   }
 });
@@ -1079,7 +1162,17 @@ var init_order_service = __esm({
     "use strict";
     init_prisma();
     createOrder = async (payload, userId) => {
-      const { delivery_address, items } = payload;
+      const { delivery_address, phone_number, items } = payload;
+      const user = await prisma.user.findUnique({
+        where: {
+          id: userId
+        }
+      });
+      if (user?.status === "SUSPENDED") {
+        throw new Error(
+          "We've noticed some unusual activity on your account, and it is currently restricted from placing new orders. Reach out to our help center to resolve this."
+        );
+      }
       const mealIds = items.map((item) => item.mealId);
       return await prisma.$transaction(async (tx) => {
         const meals = await tx.meal.findMany({
@@ -1113,8 +1206,9 @@ var init_order_service = __esm({
           data: {
             user_id: userId,
             provider_id: providerId,
-            total_amount: calculateAmount,
+            total_amount: Math.floor(calculateAmount + 70 + calculateAmount * 0.1),
             delivery_address,
+            phone_number,
             orderItems: {
               create: orderItemsData
             }
@@ -1144,7 +1238,8 @@ var init_order_service = __esm({
               meal: {
                 select: {
                   name: true,
-                  price: true
+                  price: true,
+                  image_url: true
                 }
               }
             }
@@ -1163,7 +1258,8 @@ var init_order_service = __esm({
               meal: {
                 select: {
                   name: true,
-                  price: true
+                  price: true,
+                  image_url: true
                 }
               }
             }
@@ -1173,11 +1269,14 @@ var init_order_service = __esm({
     };
     getIncomingOrder = async (userId) => {
       return await prisma.$transaction(async (tx) => {
-        const provider = await tx.providerProfile.findUniqueOrThrow({
+        const provider = await tx.providerProfile.findUnique({
           where: {
             user_id: userId
           }
         });
+        if (!provider) {
+          return [];
+        }
         const providerId = provider?.id;
         if (!providerId) {
           throw new Error("Provider not found");
@@ -1364,21 +1463,42 @@ var init_order_router = __esm({
     init_order_controller();
     router3 = Router3();
     router3.get("/orders", auth_middleware_default(UserRole.CUSTOMER), orderController.getUserOwnOrder);
-    router3.get("/orders/:id", auth_middleware_default(UserRole.CUSTOMER), orderController.getOrderById);
-    router3.get("/incoming-orders", auth_middleware_default(UserRole.PROVIDER), orderController.getIncomingOrder);
+    router3.get(
+      "/orders/:id",
+      auth_middleware_default(UserRole.CUSTOMER, UserRole.PROVIDER, UserRole.ADMIN),
+      orderController.getOrderById
+    );
+    router3.get(
+      "/incoming-orders",
+      auth_middleware_default(UserRole.PROVIDER),
+      orderController.getIncomingOrder
+    );
     router3.post("/orders", auth_middleware_default(UserRole.CUSTOMER), orderController.createOrder);
-    router3.patch("/orders/:id", auth_middleware_default(UserRole.PROVIDER), orderController.updateOrderStatus);
+    router3.patch(
+      "/orders/:id",
+      auth_middleware_default(UserRole.PROVIDER),
+      orderController.updateOrderStatus
+    );
     router3.delete("/:id", auth_middleware_default(UserRole.CUSTOMER), orderController.deleteOrder);
     orderRouter = router3;
   }
 });
 
 // src/modules/customer/customer.services.ts
-var updateCustomerProfile, crateCustomerReview, addToCart, getOwnCart, customerservices;
+var getMyCustomerProfile, updateCustomerProfile, crateCustomerReview, getCartById, customerservices;
 var init_customer_services = __esm({
   "src/modules/customer/customer.services.ts"() {
     "use strict";
     init_prisma();
+    getMyCustomerProfile = async (id) => {
+      const customerProfile = await prisma.user.findUnique({
+        where: { id }
+      });
+      if (!customerProfile) {
+        throw new Error("This is not Your profile");
+      }
+      return customerProfile;
+    };
     updateCustomerProfile = async (id, payload = {}) => {
       return await prisma.user.update({
         where: { id },
@@ -1417,10 +1537,19 @@ var init_customer_services = __esm({
         if (alreadyReviewed) {
           throw new Error("You have already reviewed this meal.");
         }
+        const user = await tx.user.findFirst({
+          where: {
+            id: userId
+          }
+        });
+        if (!user) {
+          throw new Error("User not found");
+        }
         const newReview = await tx.review.create({
           data: {
             user_id: userId,
             meal_id: mealId,
+            name: user.name,
             rating: data.rating,
             comment: data.comment
           }
@@ -1441,129 +1570,61 @@ var init_customer_services = __esm({
         return newReview;
       });
     };
-    addToCart = async (userId, mealId, quyantity) => {
+    getCartById = async (userId, cartId) => {
       return await prisma.$transaction(async (tx) => {
-        const provider = await tx.meal.findUnique({
+        const cart = await tx.cart.findUnique({
           where: {
-            id: mealId
-          }
-        });
-        const providerId = provider?.provider_id;
-        if (!providerId) {
-          throw new Error("Meal not found");
-        }
-        let cart = await tx.cart.findUnique({
-          where: {
-            user_id_provider_id: { user_id: userId, provider_id: providerId }
-          }
-        });
-        if (!cart) {
-          cart = await tx.cart.create({
-            data: {
-              user_id: userId,
-              provider_id: providerId
-            }
-          });
-        }
-        const total_cart = await tx.cart.count();
-        const existingItem = await tx.cartItem.findUnique({
-          where: {
-            cart_id_meal_id: {
-              cart_id: cart.id,
-              meal_id: mealId
-            }
-          }
-        });
-        if (existingItem) {
-          const cartItem = await tx.cartItem.update({
-            where: {
-              id: existingItem.id
-            },
-            data: {
-              quantity: existingItem.quantity + quyantity
-            },
-            include: {
-              meal: {
-                select: {
-                  name: true,
-                  image_url: true,
-                  price: true,
-                  provider: {
-                    select: {
-                      name: true,
-                      logo_url: true
-                    }
+            id: cartId
+          },
+          include: {
+            cartItems: {
+              select: {
+                quantity: true,
+                price: true,
+                meal: {
+                  select: {
+                    id: true,
+                    name: true
                   }
                 }
               }
             }
-          });
-          return {
-            data: cartItem,
-            total_cart
-          };
-        } else {
-          const cartItem = await tx.cartItem.create({
-            data: {
-              cart_id: cart.id,
-              meal_id: mealId,
-              quantity: quyantity
-            },
-            include: {
-              meal: {
-                select: {
-                  name: true,
-                  image_url: true,
-                  price: true,
-                  provider: {
-                    select: {
-                      name: true,
-                      logo_url: true
-                    }
-                  }
-                }
-              }
-            }
-          });
-          return { data: cartItem, total_cart };
-        }
-      });
-    };
-    getOwnCart = async (id) => {
-      return await prisma.cart.findMany({
-        where: {
-          user_id: id
-        },
-        include: {
-          cartItems: {
-            include: {
-              meal: {
-                select: {
-                  name: true,
-                  price: true,
-                  image_url: true
-                }
-              }
-            }
           }
+        });
+        if (cart?.user_id !== userId) {
+          throw new Error("You are not authorized to access this specific cart.");
         }
+        return cart;
       });
     };
     customerservices = {
+      getMyCustomerProfile,
       updateCustomerProfile,
       crateCustomerReview,
-      addToCart,
-      getOwnCart
+      getCartById
     };
   }
 });
 
 // src/modules/customer/customer.controller.ts
-var updateCustomerProfile2, crateCustomerReview2, addToCart2, getOwnCart2, customerController;
+var getMyCustomerProfile2, updateCustomerProfile2, crateCustomerReview2, getCartById2, customerController;
 var init_customer_controller = __esm({
   "src/modules/customer/customer.controller.ts"() {
     "use strict";
     init_customer_services();
+    getMyCustomerProfile2 = async (req, res) => {
+      const id = req.user?.id;
+      try {
+        const result = await customerservices.getMyCustomerProfile(
+          id
+        );
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: "User not found"
+        });
+      }
+    };
     updateCustomerProfile2 = async (req, res) => {
       const id = req.user?.id;
       const data = req.body;
@@ -1596,28 +1657,13 @@ var init_customer_controller = __esm({
         });
       }
     };
-    addToCart2 = async (req, res) => {
+    getCartById2 = async (req, res) => {
       const id = req.user?.id;
-      const mealId = req.params.id;
-      const { quantity } = req.body;
+      const cartId = req.params.cartId;
       try {
-        const result = await customerservices.addToCart(
+        const result = await customerservices.getCartById(
           id,
-          mealId,
-          quantity
-        );
-        res.status(200).json(result);
-      } catch (e) {
-        res.status(400).json({
-          message: e.message || "An unexpected error occurred"
-        });
-      }
-    };
-    getOwnCart2 = async (req, res) => {
-      const id = req.user?.id;
-      try {
-        const result = await customerservices.getOwnCart(
-          id
+          cartId
         );
         res.status(200).json(result);
       } catch (e) {
@@ -1627,10 +1673,10 @@ var init_customer_controller = __esm({
       }
     };
     customerController = {
+      getMyCustomerProfile: getMyCustomerProfile2,
       updateCustomerProfile: updateCustomerProfile2,
       crateCustomerReview: crateCustomerReview2,
-      addToCart: addToCart2,
-      getOwnCart: getOwnCart2
+      getCartById: getCartById2
     };
   }
 });
@@ -1645,6 +1691,11 @@ var init_customer_router = __esm({
     init_auth_middleware();
     init_enums();
     router4 = Router4();
+    router4.get(
+      "/customer-profile/:id",
+      auth_middleware_default(UserRole.CUSTOMER),
+      customerController.getMyCustomerProfile
+    );
     router4.patch(
       "/customer-profile",
       auth_middleware_default(UserRole.CUSTOMER),
@@ -1655,17 +1706,635 @@ var init_customer_router = __esm({
       auth_middleware_default(UserRole.CUSTOMER),
       customerController.crateCustomerReview
     );
-    router4.post(
-      "/addToCart/:id",
-      auth_middleware_default(UserRole.CUSTOMER),
-      customerController.addToCart
-    );
-    router4.get(
-      "/cart",
-      auth_middleware_default(UserRole.CUSTOMER),
-      customerController.getOwnCart
-    );
+    router4.get("/cart/:cartId", auth_middleware_default(UserRole.CUSTOMER), customerController.getCartById);
     customerRouter = router4;
+  }
+});
+
+// src/modules/public/public.services.ts
+var getAllCategory, getCategoryById, getAllMeal, getAllTopMeal, getMealsById, getAllProvider, getProviderById, addToCart, getOwnCart, getOwnCartCount, cartDelete, itemDelete, publicServices;
+var init_public_services = __esm({
+  "src/modules/public/public.services.ts"() {
+    "use strict";
+    init_prisma();
+    getAllCategory = async () => {
+      const allCategory = await prisma.category.findMany();
+      const totalCategory = await prisma.category.count();
+      return { data: allCategory, totalCategory };
+    };
+    getCategoryById = async (id) => {
+      const category = await prisma.category.findUnique({
+        where: { id },
+        include: {
+          meals: {
+            select: {
+              id: true,
+              name: true,
+              image_url: true,
+              description: true,
+              price: true,
+              averageRating: true
+            }
+          }
+        }
+      });
+      if (!category) {
+        throw new Error("Category not available");
+      }
+      return category;
+    };
+    getAllMeal = async (search, dietaryParams, minPrice, maxPrice, page, limit, skip) => {
+      const andCondition = [];
+      if (search) {
+        andCondition.push({
+          OR: [
+            {
+              categories: {
+                name: {
+                  contains: search,
+                  mode: "insensitive"
+                }
+              }
+            },
+            {
+              name: {
+                contains: search,
+                mode: "insensitive"
+              }
+            }
+          ]
+        });
+      }
+      if (minPrice || maxPrice) {
+        andCondition.push({
+          price: {
+            ...minPrice && { gte: minPrice },
+            ...maxPrice && { lte: maxPrice }
+          }
+        });
+      }
+      const allowedDietary = [
+        "VEGAN",
+        "VEGETARIAN",
+        "NON_VEGETARIAN",
+        "KETO",
+        "GLUTEN_FREE",
+        "DAIRY_FREE",
+        "NUT_FREE",
+        "EGG_FREE",
+        "LOW_CARB",
+        "LOW_FAT",
+        "HIGH_PROTEIN"
+      ];
+      if (dietaryParams) {
+        const isValid = dietaryParams?.split(",").every((params) => allowedDietary.includes(params));
+        if (!isValid) {
+          throw new Error("Invalid dietary preference provided.");
+        }
+        if (dietaryParams && dietaryParams?.length > 0) {
+          andCondition.push({
+            dietary: {
+              in: [dietaryParams]
+            }
+          });
+        }
+      }
+      const result = await prisma.meal.findMany({
+        take: limit,
+        skip,
+        where: andCondition.length > 0 ? {
+          AND: [...andCondition, { isAvailable: true, isDeleted: false }]
+        } : { isAvailable: true, isDeleted: false },
+        include: {
+          categories: {
+            select: {
+              name: true,
+              description: true
+            }
+          },
+          reviews: {
+            select: {
+              comment: true,
+              rating: true,
+              user_id: true
+            }
+          }
+        }
+      });
+      const total_meal = await prisma.meal.count();
+      return {
+        data: result,
+        pagination: {
+          limit,
+          total_meal,
+          current_Page: page,
+          totatl_page: Math.ceil(total_meal / limit)
+        }
+      };
+    };
+    getAllTopMeal = async () => {
+      return await prisma.meal.findMany({
+        where: {
+          averageRating: {
+            gte: 4,
+            lte: 5
+          },
+          isAvailable: true
+        },
+        orderBy: {
+          averageRating: "desc"
+        }
+      });
+    };
+    getMealsById = async (id) => {
+      const meal = await prisma.meal.findUnique({
+        where: {
+          id
+        },
+        include: {
+          categories: {
+            select: {
+              name: true
+            }
+          },
+          reviews: true
+        }
+      });
+      if (!meal) {
+        throw new Error("Meal not found");
+      }
+      return meal;
+    };
+    getAllProvider = async () => {
+      const provider = await prisma.providerProfile.findMany({
+        include: {
+          meals: {
+            include: {
+              categories: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        }
+      });
+      const total_provider = await prisma.providerProfile.count();
+      return { data: provider, total_provider };
+    };
+    getProviderById = async (id) => {
+      return await prisma.providerProfile.findUniqueOrThrow({
+        where: {
+          id
+        },
+        include: {
+          meals: {
+            include: {
+              categories: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        }
+      });
+    };
+    addToCart = async (userId, mealId, quyantity, price) => {
+      return await prisma.$transaction(async (tx) => {
+        const meal = await tx.meal.findUnique({
+          where: {
+            id: mealId
+          }
+        });
+        const providerId = meal?.provider_id;
+        if (!providerId) {
+          throw new Error("Meal not found");
+        }
+        let cart = await tx.cart.findUnique({
+          where: {
+            user_id_provider_id: { user_id: userId, provider_id: providerId }
+          }
+        });
+        if (!cart) {
+          cart = await tx.cart.create({
+            data: {
+              user_id: userId,
+              provider_id: providerId
+            }
+          });
+        }
+        const total_cart = await tx.cart.count();
+        const existingCartItem = await tx.cartItem.findUnique({
+          where: {
+            cart_id_meal_id: {
+              cart_id: cart.id,
+              meal_id: mealId
+            }
+          }
+        });
+        if (existingCartItem) {
+          const cartItem = await tx.cartItem.update({
+            where: {
+              id: existingCartItem.id
+            },
+            data: {
+              quantity: existingCartItem.quantity + quyantity,
+              price: existingCartItem.price + price
+            },
+            include: {
+              meal: {
+                select: {
+                  id: true,
+                  name: true,
+                  image_url: true,
+                  price: true,
+                  provider: {
+                    select: {
+                      name: true,
+                      logo_url: true
+                    }
+                  }
+                }
+              }
+            }
+          });
+          return {
+            data: cartItem,
+            total_cart
+          };
+        } else {
+          const cartItem = await tx.cartItem.create({
+            data: {
+              cart_id: cart.id,
+              meal_id: mealId,
+              quantity: quyantity,
+              price
+            },
+            include: {
+              meal: {
+                select: {
+                  id: true,
+                  name: true,
+                  image_url: true,
+                  price: true,
+                  provider: {
+                    select: {
+                      name: true,
+                      logo_url: true
+                    }
+                  }
+                }
+              }
+            }
+          });
+          return { data: cartItem, total_cart };
+        }
+      });
+    };
+    getOwnCart = async (id) => {
+      return await prisma.cart.findMany({
+        where: {
+          user_id: id
+        },
+        include: {
+          cartItems: {
+            include: {
+              meal: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  image_url: true
+                }
+              }
+            }
+          }
+        }
+      });
+    };
+    getOwnCartCount = async (id) => {
+      return await prisma.cart.count({
+        where: {
+          user_id: id
+        }
+      });
+    };
+    cartDelete = async (cartId) => {
+      return await prisma.cart.delete({
+        where: {
+          id: cartId
+        }
+      });
+    };
+    itemDelete = async (itemsId) => {
+      return await prisma.cartItem.delete({
+        where: {
+          id: itemsId
+        }
+      });
+    };
+    publicServices = {
+      getAllCategory,
+      getCategoryById,
+      getAllMeal,
+      getAllTopMeal,
+      getAllProvider,
+      getProviderById,
+      getMealsById,
+      addToCart,
+      getOwnCart,
+      getOwnCartCount,
+      cartDelete,
+      itemDelete
+    };
+  }
+});
+
+// src/helper/paginationHelper.ts
+var paginationHelper;
+var init_paginationHelper = __esm({
+  "src/helper/paginationHelper.ts"() {
+    "use strict";
+    paginationHelper = (options) => {
+      const page = Number(options.page) || 1;
+      const limit = Number(options.limit) || 7;
+      const skip = (page - 1) * limit;
+      return {
+        page,
+        limit,
+        skip
+      };
+    };
+  }
+});
+
+// src/modules/public/public.controller.ts
+var getAllCategory2, getCategoryById2, getAllMeal2, getAllTopMeal2, getMealsById2, getAllProvider2, getProviderById2, addToCart2, getOwnCart2, getOwnCartCount2, cartDelete2, itemDelete2, publicController;
+var init_public_controller = __esm({
+  "src/modules/public/public.controller.ts"() {
+    "use strict";
+    init_public_services();
+    init_paginationHelper();
+    getAllCategory2 = async (req, res) => {
+      try {
+        const result = await publicServices.getAllCategory();
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getCategoryById2 = async (req, res) => {
+      const id = req.params.id;
+      try {
+        const result = await publicServices.getCategoryById(id);
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getAllMeal2 = async (req, res) => {
+      const search = req.query.search;
+      const dietaryParams = req.query.dietary;
+      const minPriceStr = req.query.minPrice;
+      const maxPriceStr = req.query.maxPrice;
+      const minPrice = Number(minPriceStr);
+      const maxPrice = Number(maxPriceStr);
+      const { page, limit, skip } = paginationHelper(req.query);
+      try {
+        const allmeal = await publicServices.getAllMeal(
+          search,
+          dietaryParams,
+          minPrice,
+          maxPrice,
+          page,
+          limit,
+          skip
+        );
+        res.status(200).json(allmeal);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getAllTopMeal2 = async (req, res) => {
+      try {
+        const topMeals = await publicServices.getAllTopMeal();
+        res.status(200).json(topMeals);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getMealsById2 = async (req, res) => {
+      const id = req.params.id;
+      try {
+        const mealDetails = await publicServices.getMealsById(id);
+        res.status(200).json(mealDetails);
+      } catch (e) {
+        res.status(404).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getAllProvider2 = async (req, res) => {
+      try {
+        const allProvider = await publicServices.getAllProvider();
+        res.status(200).json(allProvider);
+      } catch (e) {
+        res.status(404).json({
+          message: "Provider not found",
+          error: e
+        });
+      }
+    };
+    getProviderById2 = async (req, res) => {
+      const id = req.params.id;
+      try {
+        const getSpecificProvider = await publicServices.getProviderById(
+          id
+        );
+        res.status(200).json(getSpecificProvider);
+      } catch (e) {
+        res.status(404).json({
+          message: "Provider not found",
+          error: e
+        });
+      }
+    };
+    addToCart2 = async (req, res) => {
+      const id = req.user?.id;
+      const { quantity, price, mealId } = req.body;
+      try {
+        const result = await publicServices.addToCart(
+          id,
+          mealId,
+          quantity,
+          price
+        );
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getOwnCart2 = async (req, res) => {
+      const id = req.user?.id;
+      try {
+        const result = await publicServices.getOwnCart(id);
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    getOwnCartCount2 = async (req, res) => {
+      const id = req.user?.id;
+      try {
+        const result = await publicServices.getOwnCartCount(id);
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    cartDelete2 = async (req, res) => {
+      const cartId = req.params.cartId;
+      try {
+        const result = await publicServices.cartDelete(
+          cartId
+        );
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    itemDelete2 = async (req, res) => {
+      const itemsId = req.params.itemsId;
+      try {
+        const result = await publicServices.itemDelete(
+          itemsId
+        );
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    publicController = {
+      getAllCategory: getAllCategory2,
+      getCategoryById: getCategoryById2,
+      getAllMeal: getAllMeal2,
+      getAllTopMeal: getAllTopMeal2,
+      getAllProvider: getAllProvider2,
+      getProviderById: getProviderById2,
+      getMealsById: getMealsById2,
+      addToCart: addToCart2,
+      getOwnCart: getOwnCart2,
+      getOwnCartCount: getOwnCartCount2,
+      cartDelete: cartDelete2,
+      itemDelete: itemDelete2
+    };
+  }
+});
+
+// src/modules/public/public.router.ts
+import { Router as Router5 } from "express";
+var router5, publicRouter;
+var init_public_router = __esm({
+  "src/modules/public/public.router.ts"() {
+    "use strict";
+    init_public_controller();
+    init_auth_middleware();
+    router5 = Router5();
+    router5.get("/categories", publicController.getAllCategory);
+    router5.get("/categories/:id", publicController.getCategoryById);
+    router5.get("/meals", publicController.getAllMeal);
+    router5.get("/top-meals", publicController.getAllTopMeal);
+    router5.get("/meals/:id", publicController.getMealsById);
+    router5.get("/providers", publicController.getAllProvider);
+    router5.get("/providers/:id", publicController.getProviderById);
+    router5.post("/addToCart", auth_middleware_default(), publicController.addToCart);
+    router5.get("/carts", auth_middleware_default(), publicController.getOwnCart);
+    router5.get("/cart/count", auth_middleware_default(), publicController.getOwnCartCount);
+    router5.delete("/cart/:cartId", publicController.cartDelete);
+    router5.delete("/cartItem/:itemsId", publicController.itemDelete);
+    publicRouter = router5;
+  }
+});
+
+// src/modules/user/user.services.ts
+var getOwnUserData, userServices;
+var init_user_services = __esm({
+  "src/modules/user/user.services.ts"() {
+    "use strict";
+    init_prisma();
+    getOwnUserData = async (userId) => {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: userId
+        },
+        include: {
+          providerProfile: true
+        }
+      });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      return user;
+    };
+    userServices = {
+      getOwnUserData
+    };
+  }
+});
+
+// src/modules/user/user.controller.ts
+var getOwnUserData2, userController;
+var init_user_controller = __esm({
+  "src/modules/user/user.controller.ts"() {
+    "use strict";
+    init_user_services();
+    getOwnUserData2 = async (req, res) => {
+      const userId = req.user?.id;
+      try {
+        const result = await userServices.getOwnUserData(userId);
+        res.status(200).json(result);
+      } catch (e) {
+        res.status(400).json({
+          message: e.message || "An unexpected error occurred"
+        });
+      }
+    };
+    userController = {
+      getOwnUserData: getOwnUserData2
+    };
+  }
+});
+
+// src/modules/user/user.router.ts
+import { Router as Router6 } from "express";
+var router6, userRouter;
+var init_user_router = __esm({
+  "src/modules/user/user.router.ts"() {
+    "use strict";
+    init_auth_middleware();
+    init_user_controller();
+    router6 = Router6();
+    router6.get("/user", auth_middleware_default(), userController.getOwnUserData);
+    userRouter = router6;
   }
 });
 
@@ -1683,6 +2352,8 @@ var init_app = __esm({
     init_provider_router();
     init_order_router();
     init_customer_router();
+    init_public_router();
+    init_user_router();
     app = express();
     app.use(
       cors({
@@ -1696,6 +2367,8 @@ var init_app = __esm({
     app.use("/api/provider", providerRouter);
     app.use("/api/order", orderRouter);
     app.use("/api/customer", customerRouter);
+    app.use("/api", userRouter);
+    app.use("/api", publicRouter);
     app.use(globalErrorHandler_default);
     app.get("/", async (req, res) => {
       res.send("Server Running");
