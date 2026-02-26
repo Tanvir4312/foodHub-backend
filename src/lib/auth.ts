@@ -40,16 +40,16 @@ export const auth = betterAuth({
 
   trustedOrigins: [process.env.APP_URL!],
 
-  // cookies: {
-  //   session_token: {
-  //     attributes: {
-  //       sameSite: "None",
-  //       secure: true,
-  //       httpOnly: true,
-  //       maxAge: 60 * 60 * 24 * 7,
-  //     },
-  //   },
-  // },
+  cookies: {
+    session_token: {
+      attributes: {
+        sameSite: "None",
+        secure: true,
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+      },
+    },
+  },
   // -------------------------
 
   user: {
