@@ -11,4 +11,10 @@ router.get(
     reviewController.getAllReviews
 )
 
+router.get(
+    "/my-reviews",
+    auth(UserRole.CUSTOMER),
+    reviewController.getMyReviews
+)
+
 export const reviewRouter = router;

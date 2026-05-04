@@ -15,4 +15,23 @@ const getAllReviews = async () => {
     return result
 }
 
-export const reviewService = { getAllReviews };
+const getMyReviews = async (email: string) => {
+    const result = await prisma.review.findMany({
+        where: {
+            user: {
+                email: email
+            }
+        },
+        include: {
+            meal: {
+                select: {
+                    name: true,
+                    image_url: true
+                }
+            }
+        }
+    });
+    return result
+}
+
+export const reviewService = { getAllReviews, getMyReviews };

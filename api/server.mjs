@@ -339,21 +339,27 @@ var init_prisma = __esm({
 // src/lib/auth.ts
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-var auth;
+var isProduction, auth;
 var init_auth = __esm({
   "src/lib/auth.ts"() {
     "use strict";
     init_prisma();
+    isProduction = process.env.BETTER_AUTH_URL?.startsWith("https://");
     auth = betterAuth({
       database: prismaAdapter(prisma, {
         provider: "postgresql"
       }),
-      trustedOrigins: [process.env.APP_URL],
+      // trustedOrigins: [process.env.APP_URL!],
+      trustedOrigins: [
+        process.env.APP_URL,
+        "http://localhost:3000",
+        process.env.BETTER_AUTH_URL
+      ],
       cookies: {
         session_token: {
           attributes: {
-            sameSite: "None",
-            secure: true,
+            sameSite: "Lax",
+            secure: process.env.BETTER_AUTH_URL?.startsWith("https://") || false,
             httpOnly: true,
             maxAge: 60 * 60 * 24 * 7
           }
@@ -381,6 +387,12 @@ var init_auth = __esm({
       emailAndPassword: {
         enabled: true,
         autoSignIn: false
+      },
+      advanced: {
+        trustedProxyHeaders: true,
+        disableOriginCheck: true,
+        disableCSRFCheck: true
+        // Last resort for local 403 issues
       }
     });
   }
@@ -2522,7 +2534,7 @@ var init_coupon_router = __esm({
 });
 
 // src/modules/review/review.service.ts
-var getAllReviews, reviewService;
+var getAllReviews, getMyReviews, reviewService;
 var init_review_service = __esm({
   "src/modules/review/review.service.ts"() {
     "use strict";
@@ -2539,12 +2551,30 @@ var init_review_service = __esm({
       });
       return result;
     };
-    reviewService = { getAllReviews };
+    getMyReviews = async (email) => {
+      const result = await prisma.review.findMany({
+        where: {
+          user: {
+            email
+          }
+        },
+        include: {
+          meal: {
+            select: {
+              name: true,
+              image_url: true
+            }
+          }
+        }
+      });
+      return result;
+    };
+    reviewService = { getAllReviews, getMyReviews };
   }
 });
 
 // src/modules/review/review.controller.ts
-var getAllReviews2, reviewController;
+var getAllReviews2, getMyReviews2, reviewController;
 var init_review_controller = __esm({
   "src/modules/review/review.controller.ts"() {
     "use strict";
@@ -2565,7 +2595,30 @@ var init_review_controller = __esm({
         });
       }
     };
-    reviewController = { getAllReviews: getAllReviews2 };
+    getMyReviews2 = async (req, res) => {
+      try {
+        const email = req.user?.email;
+        if (!email) {
+          return res.status(401).json({
+            success: false,
+            message: "Unauthorized"
+          });
+        }
+        const result = await reviewService.getMyReviews(email);
+        res.status(200).json({
+          success: true,
+          message: "My reviews fetched successfully",
+          data: result
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: "Failed to fetch my reviews",
+          error
+        });
+      }
+    };
+    reviewController = { getAllReviews: getAllReviews2, getMyReviews: getMyReviews2 };
   }
 });
 
@@ -2576,10 +2629,17 @@ var init_review_router = __esm({
   "src/modules/review/review.router.ts"() {
     "use strict";
     init_review_controller();
+    init_auth_middleware();
+    init_enums();
     router8 = Router8();
     router8.get(
       "/",
       reviewController.getAllReviews
+    );
+    router8.get(
+      "/my-reviews",
+      auth_middleware_default(UserRole.CUSTOMER),
+      reviewController.getMyReviews
     );
     reviewRouter = router8;
   }
