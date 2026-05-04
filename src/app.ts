@@ -9,6 +9,9 @@ import { orderRouter } from "./modules/order/order.router";
 import { customerRouter } from "./modules/customer/customer.router";
 import { publicRouter } from "./modules/public/public.router";
 import { userRouter } from "./modules/user/user.router";
+import { CouponRoutes } from "./modules/coupon/coupon.router";
+import { reviewRouter } from "./modules/review/review.router";
+import { foodBlogsRouter } from "./modules/foodBlogs/foodBlogs.router";
 
 const app: Application = express();
 
@@ -62,6 +65,15 @@ app.use("/api", userRouter);
 
 // Public apis
 app.use("/api", publicRouter);
+
+// Coupon
+app.use("/api/coupons", CouponRoutes);
+
+// Review
+app.use("/api/reviews", reviewRouter);
+
+// FoodBlog
+app.use("/api/food-blogs", foodBlogsRouter);
 
 // Error Handler
 app.use(errorHandler);

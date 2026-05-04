@@ -87,13 +87,13 @@ const getAllMeal = async (
   ];
 
   if (dietaryParams) {
-    const isValid = dietaryParams
-      ?.split(",")
-      .every((params) => allowedDietary.includes(params));
+    // const isValid = dietaryParams
+    //   ?.split(",")
+    //   .every((params) => allowedDietary.includes(params));
 
-    if (!isValid) {
-      throw new Error("Invalid dietary preference provided.");
-    }
+    // if (!isValid) {
+    //   throw new Error("Invalid dietary preference provided.");
+    // }
 
     if (dietaryParams && dietaryParams?.length > 0) {
       andCondition.push({

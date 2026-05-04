@@ -19,7 +19,7 @@ router.get(
   orderController.getIncomingOrder,
 );
 
-router.post("/orders", auth(UserRole.CUSTOMER), orderController.createOrder);
+router.post("/orders", auth(UserRole.CUSTOMER, UserRole.ADMIN), orderController.createOrder);
 
 router.patch(
   "/orders/:id",

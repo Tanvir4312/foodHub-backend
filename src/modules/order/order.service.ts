@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma";
 type OrderPlace = {
   delivery_address: string;
   phone_number: string;
+  couponCode?: string; // optional — user না দিলেও order হবে
   items: {
     mealId: string;
     quantity: number;
@@ -11,12 +12,14 @@ type OrderPlace = {
 };
 
 const createOrder = async (payload: OrderPlace, userId: string) => {
-  const { delivery_address, phone_number, items } = payload;
+  const { delivery_address, phone_number, items, couponCode } = payload;
+
+  if (items.length === 0) {
+    throw new Error("Please add at least one item to your order");
+  }
 
   const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
+    where: { id: userId },
   });
 
   if (user?.status === "SUSPENDED") {
@@ -25,59 +28,75 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
     );
   }
 
-  //   Get All meal id
-  const mealIds = items.map((item) => item.mealId);
+  // coupon দিলে আগেই validate করো — transaction এর বাইরে
+  // কারণ invalid coupon হলে order create ই হবে না
+  let discountPercent = 0;
 
-  return await prisma.$transaction(async (tx) => {
-    //   check kora hocche je item e je meal id ache sei id er data meal e ache kina
-    const meals = await tx.meal.findMany({
-      where: {
-        id: { in: mealIds },
-      },
+  if (couponCode) {
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: couponCode.toUpperCase().trim() },
     });
 
-    // mealIds er id length ar meal database theke pawa meals er length ek kina
-    if (mealIds.length !== meals.length) {
-      throw new Error("Some meal missing!!Please try again.");
+    if (!coupon) throw new Error("Invalid coupon code");
+    if (!coupon.isActive) throw new Error("Coupon is inactive");
+    if (new Date() > coupon.expiresAt) throw new Error("Coupon has expired");
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+      throw new Error("Coupon usage limit reached");
     }
 
-    // jei meal er order koreche tar provider id neya, ar ek order e ekoi provider er meal thakbe
-    const providerId = meals[0]?.provider_id;
+    discountPercent = coupon.discount;
+  }
 
+  const mealIds = items.map((item) => item.mealId).filter(Boolean);
+  
+  if (mealIds.length === 0) {
+    throw new Error("Please add at least one valid item to your order");
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const meals = await tx.meal.findMany({
+      where: { id: { in: mealIds } },
+    });
+
+    if (mealIds.length !== meals.length) {
+      throw new Error("Some meal missing!! Please try again.");
+    }
+
+    const providerId = meals[0]?.provider_id;
     if (!providerId) {
       throw new Error("Provider not found for this order");
     }
 
-    let calculateAmount = 0;
+    let subtotal = 0;
 
     const orderItemsData = items.map((item) => {
       const meal = meals.find((m) => item.mealId === m.id);
+      if (!meal) throw new Error("Meal not found!!");
 
-      if (!meal) {
-        throw new Error("Meal not found!!");
-      }
-
-      const individualOrderTotapPrice = meal.price * item.quantity;
-   
-
-      calculateAmount += meal.price * item.quantity;
-  
+      const itemTotal = meal.price * item.quantity;
+      subtotal += itemTotal;
 
       return {
         meal_id: meal.id,
         quantity: item.quantity,
         price: meal.price,
-        total_price: individualOrderTotapPrice,
+        total_price: itemTotal,
       };
     });
 
-    return await tx.order.create({
+    // discount + delivery + tax সহ final amount calculate
+    const discountAmount = (subtotal * discountPercent) / 100;
+    const afterDiscount = subtotal - discountAmount;
+    const totalAmount = Math.floor(afterDiscount + 70 + afterDiscount * 0.1);
+
+    const order = await tx.order.create({
       data: {
         user_id: userId,
         provider_id: providerId,
-        total_amount: Math.floor(calculateAmount + 70 + calculateAmount * 0.1),
+        total_amount: totalAmount,
         delivery_address,
         phone_number,
+        coupon_code: couponCode ? couponCode.toUpperCase().trim() : null,
         orderItems: {
           create: orderItemsData,
         },
@@ -86,14 +105,23 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
         orderItems: {
           include: {
             meal: {
-              select: {
-                name: true,
-              },
+              select: { name: true },
             },
           },
         },
       },
     });
+
+    // coupon ব্যবহার হলে usedCount বাড়াও — order create সফল হওয়ার পরে
+    // একই transaction এ থাকায় order fail হলে এটাও rollback হবে
+    if (couponCode) {
+      await tx.coupon.update({
+        where: { code: couponCode.toUpperCase().trim() },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+
+    return order;
   });
 };
 
@@ -109,7 +137,7 @@ const getUserOwnOrder = async (userId: string) => {
             select: {
               name: true,
               price: true,
-              image_url : true
+              image_url: true
             },
           },
         },
@@ -130,7 +158,7 @@ const getOrderById = async (orderId: string) => {
             select: {
               name: true,
               price: true,
-              image_url : true
+              image_url: true
             },
           },
         },

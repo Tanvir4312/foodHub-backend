@@ -7,6 +7,7 @@ model Review {
     meal    Meal   @relation(fields: [meal_id], references: [id], onDelete: Cascade)
     user_id String
     user    User   @relation(fields: [user_id], references: [id])
+    createdAt DateTime @default(now())
 
     @@map("reviews")
 }

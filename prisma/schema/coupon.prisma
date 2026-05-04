@@ -1,0 +1,11 @@
+model Coupon {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  discount     Float    // percentage e.g. 20 = 20%
+  expiresAt    DateTime
+  coupon_code  String? 
+  isActive     Boolean  @default(true)
+  usageLimit   Int?     // max kotojon use korte parbe
+  usedCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+}

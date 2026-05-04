@@ -27,6 +27,7 @@ async function seedAdmin() {
       },
       body: JSON.stringify(adminData),
     });
+    console.log("Admin created successfully");
   } catch (err) {
     console.log(err);
   }
