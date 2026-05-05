@@ -398,19 +398,72 @@ var init_auth = __esm({
   }
 });
 
+// src/helper/paginationHelper.ts
+var paginationHelper;
+var init_paginationHelper = __esm({
+  "src/helper/paginationHelper.ts"() {
+    "use strict";
+    paginationHelper = (options) => {
+      const page = Number(options.page) || 1;
+      const limit = Number(options.limit) || 7;
+      const skip = (page - 1) * limit;
+      return {
+        page,
+        limit,
+        skip
+      };
+    };
+  }
+});
+
 // src/modules/admin/admin.service.ts
 var getAllUser, updateUserStatus, createCategories, updateCategory, deleteCategory, getAllOrder, updateOrderStatus, mealIsDeleted, getStats, adminServices;
 var init_admin_service = __esm({
   "src/modules/admin/admin.service.ts"() {
     "use strict";
     init_prisma();
-    getAllUser = async () => {
-      const allUser = await prisma.user.findMany({
+    init_paginationHelper();
+    getAllUser = async (params) => {
+      const { searchTerm, role, status, sortBy, sortOrder } = params;
+      const { page, limit, skip } = paginationHelper({
+        page: params.page,
+        limit: params.limit
+      });
+      const andCondition = [];
+      if (searchTerm) {
+        andCondition.push({
+          OR: [
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { email: { contains: searchTerm, mode: "insensitive" } }
+          ]
+        });
+      }
+      if (role) {
+        andCondition.push({ role });
+      }
+      if (status) {
+        andCondition.push({ status });
+      }
+      const whereCondition = andCondition.length > 0 ? { AND: andCondition } : {};
+      const result = await prisma.user.findMany({
+        where: whereCondition,
         include: {
           providerProfile: true
-        }
+        },
+        skip,
+        take: limit,
+        orderBy: sortBy ? { [sortBy]: sortOrder || "asc" } : { createdAt: sortOrder || "desc" }
       });
-      return allUser;
+      const total = await prisma.user.count({ where: whereCondition });
+      return {
+        meta: {
+          page,
+          limit,
+          total,
+          totalPage: Math.ceil(total / limit)
+        },
+        data: result
+      };
     };
     updateUserStatus = async (id, status) => {
       const updateUser = await prisma.user.update({
@@ -448,8 +501,30 @@ var init_admin_service = __esm({
       });
       return categoryDelete;
     };
-    getAllOrder = async () => {
-      const allUser = await prisma.order.findMany({
+    getAllOrder = async (query) => {
+      const { searchTerm, status, page, limit, sortBy, sortOrder } = query;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip
+      } = paginationHelper({
+        page,
+        limit
+      });
+      const whereCondition = {};
+      if (searchTerm) {
+        whereCondition.provider = {
+          name: {
+            contains: searchTerm,
+            mode: "insensitive"
+          }
+        };
+      }
+      if (status && status !== "all") {
+        whereCondition.status = status;
+      }
+      const result = await prisma.order.findMany({
+        where: whereCondition,
         include: {
           provider: {
             select: {
@@ -468,9 +543,21 @@ var init_admin_service = __esm({
               }
             }
           }
-        }
+        },
+        skip,
+        take: limitNum,
+        orderBy: sortBy ? { [sortBy]: sortOrder || "asc" } : { createdAt: sortOrder || "desc" }
       });
-      return allUser;
+      const total = await prisma.order.count({ where: whereCondition });
+      return {
+        meta: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPage: Math.ceil(total / limitNum)
+        },
+        data: result
+      };
     };
     updateOrderStatus = async (id, status) => {
       return await prisma.order.update({
@@ -607,7 +694,7 @@ var init_admin_controller = __esm({
     init_admin_service();
     getAllUser2 = async (req, res) => {
       try {
-        const result = await adminServices.getAllUser();
+        const result = await adminServices.getAllUser(req.query);
         res.status(200).json(result);
       } catch (e) {
         res.status(404).json({
@@ -662,7 +749,7 @@ var init_admin_controller = __esm({
     };
     getAllOrder2 = async (req, res) => {
       try {
-        const result = await adminServices.getAllOrder();
+        const result = await adminServices.getAllOrder(req.query);
         res.status(200).json(result);
       } catch (e) {
         res.status(404).json({
@@ -817,6 +904,7 @@ var init_provider_service = __esm({
   "src/modules/provider/provider.service.ts"() {
     "use strict";
     init_prisma();
+    init_paginationHelper();
     createProviderProfile = async (data, id) => {
       const result = await prisma.providerProfile.create({
         data: {
@@ -848,7 +936,9 @@ var init_provider_service = __esm({
         });
       });
     };
-    getProviderOwnMeals = async (userId) => {
+    getProviderOwnMeals = async (userId, query) => {
+      const { searchTerm, isAvailable, page, limit } = query;
+      const { page: pageNum, limit: limitNum, skip } = paginationHelper({ page, limit });
       return await prisma.$transaction(async (tx) => {
         const provider = await tx.providerProfile.findUniqueOrThrow({
           where: {
@@ -859,19 +949,49 @@ var init_provider_service = __esm({
         if (!providerId) {
           throw new Error("Provider Not Found!!");
         }
-        return await tx.meal.findMany({
-          where: {
-            provider_id: providerId
-          },
-          include: {
-            reviews: {
-              select: {
-                rating: true,
-                comment: true
+        const where = {
+          provider_id: providerId
+        };
+        where.NOT = {
+          isDeleted: true
+        };
+        if (searchTerm) {
+          where.OR = [
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { description: { contains: searchTerm, mode: "insensitive" } }
+          ];
+        }
+        if (isAvailable !== void 0 && isAvailable !== "" && isAvailable !== "all") {
+          where.isAvailable = isAvailable === "true";
+        }
+        const [data, total] = await Promise.all([
+          tx.meal.findMany({
+            where,
+            skip,
+            take: limitNum,
+            include: {
+              reviews: {
+                select: {
+                  rating: true,
+                  comment: true
+                }
               }
+            },
+            orderBy: {
+              id: "desc"
             }
+          }),
+          tx.meal.count({ where })
+        ]);
+        return {
+          data,
+          pagination: {
+            current_Page: pageNum,
+            limit: limitNum,
+            total_meal: total,
+            totatl_page: Math.ceil(total / limitNum)
           }
-        });
+        };
       });
     };
     createMeals = async (payload, userId) => {
@@ -1070,7 +1190,8 @@ var init_provider_controller = __esm({
       const userId = req.user?.id;
       try {
         const providerOwnMeal = await providerServices.getProviderOwnMeals(
-          userId
+          userId,
+          req.query
         );
         res.status(200).json(providerOwnMeal);
       } catch (e) {
@@ -1198,6 +1319,7 @@ var init_order_service = __esm({
   "src/modules/order/order.service.ts"() {
     "use strict";
     init_prisma();
+    init_paginationHelper();
     createOrder = async (payload, userId) => {
       const { delivery_address, phone_number, items, couponCode } = payload;
       if (items.length === 0) {
@@ -1210,6 +1332,9 @@ var init_order_service = __esm({
         throw new Error(
           "We've noticed some unusual activity on your account, and it is currently restricted from placing new orders. Reach out to our help center to resolve this."
         );
+      }
+      if (user?.role === "PROVIDER") {
+        throw new Error("Provider not allowed to order");
       }
       let discountPercent = 0;
       if (couponCode) {
@@ -1286,11 +1411,24 @@ var init_order_service = __esm({
         return order;
       });
     };
-    getUserOwnOrder = async (userId) => {
-      return await prisma.order.findMany({
-        where: {
-          user_id: userId
-        },
+    getUserOwnOrder = async (userId, query) => {
+      const { status, sortOrder, page, limit } = query;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip
+      } = paginationHelper({
+        page,
+        limit: limit || "5"
+      });
+      const whereCondition = {
+        user_id: userId
+      };
+      if (status && status !== "all") {
+        whereCondition.status = status;
+      }
+      const result = await prisma.order.findMany({
+        where: whereCondition,
         include: {
           orderItems: {
             include: {
@@ -1303,8 +1441,23 @@ var init_order_service = __esm({
               }
             }
           }
-        }
+        },
+        orderBy: {
+          createdAt: sortOrder === "asc" ? "asc" : "desc"
+        },
+        skip,
+        take: limitNum
       });
+      const total = await prisma.order.count({ where: whereCondition });
+      return {
+        data: result,
+        pagination: {
+          limit: limitNum,
+          total_meal: total,
+          current_Page: pageNum,
+          totatl_page: Math.ceil(total / limitNum)
+        }
+      };
     };
     getOrderById = async (orderId) => {
       return await prisma.order.findUniqueOrThrow({
@@ -1326,7 +1479,16 @@ var init_order_service = __esm({
         }
       });
     };
-    getIncomingOrder = async (userId) => {
+    getIncomingOrder = async (userId, query) => {
+      const { status, sortOrder, page, limit } = query;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip
+      } = paginationHelper({
+        page,
+        limit: limit || "5"
+      });
       return await prisma.$transaction(async (tx) => {
         const provider = await tx.providerProfile.findUnique({
           where: {
@@ -1334,16 +1496,17 @@ var init_order_service = __esm({
           }
         });
         if (!provider) {
-          return [];
+          return { data: [], pagination: { limit: limitNum, total_meal: 0, current_Page: pageNum, totatl_page: 1 } };
         }
-        const providerId = provider?.id;
-        if (!providerId) {
-          throw new Error("Provider not found");
+        const providerId = provider.id;
+        const whereCondition = {
+          provider_id: providerId
+        };
+        if (status && status !== "all") {
+          whereCondition.status = status;
         }
-        return await tx.order.findMany({
-          where: {
-            provider_id: providerId
-          },
+        const result = await tx.order.findMany({
+          where: whereCondition,
           include: {
             orderItems: {
               include: {
@@ -1360,8 +1523,23 @@ var init_order_service = __esm({
                 }
               }
             }
-          }
+          },
+          orderBy: {
+            createdAt: sortOrder === "asc" ? "asc" : "desc"
+          },
+          skip,
+          take: limitNum
         });
+        const total = await tx.order.count({ where: whereCondition });
+        return {
+          data: result,
+          pagination: {
+            limit: limitNum,
+            total_meal: total,
+            current_Page: pageNum,
+            totatl_page: Math.ceil(total / limitNum)
+          }
+        };
       });
     };
     updateOrderStatus3 = async (id, status, userId) => {
@@ -1438,7 +1616,10 @@ var init_order_controller = __esm({
     getUserOwnOrder2 = async (req, res) => {
       const userId = req.user?.id;
       try {
-        const order = await orderServices.getUserOwnOrder(userId);
+        const order = await orderServices.getUserOwnOrder(
+          userId,
+          req.query
+        );
         res.status(200).json(order);
       } catch (e) {
         res.status(404).json({
@@ -1460,7 +1641,10 @@ var init_order_controller = __esm({
     getIncomingOrder2 = async (req, res) => {
       const userId = req.user?.id;
       try {
-        const order = await orderServices.getIncomingOrder(userId);
+        const order = await orderServices.getIncomingOrder(
+          userId,
+          req.query
+        );
         res.status(200).json(order);
       } catch (e) {
         res.status(404).json({
@@ -1776,10 +1960,39 @@ var init_public_services = __esm({
   "src/modules/public/public.services.ts"() {
     "use strict";
     init_prisma();
-    getAllCategory = async () => {
-      const allCategory = await prisma.category.findMany();
-      const totalCategory = await prisma.category.count();
-      return { data: allCategory, totalCategory };
+    init_paginationHelper();
+    getAllCategory = async (query) => {
+      const { searchTerm, page, limit } = query;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip
+      } = paginationHelper({
+        page,
+        limit
+      });
+      const whereCondition = {};
+      if (searchTerm) {
+        whereCondition.name = {
+          contains: searchTerm,
+          mode: "insensitive"
+        };
+      }
+      const result = await prisma.category.findMany({
+        where: whereCondition,
+        skip,
+        take: limitNum
+      });
+      const total = await prisma.category.count({ where: whereCondition });
+      return {
+        meta: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPage: Math.ceil(total / limitNum)
+        },
+        data: result
+      };
     };
     getCategoryById = async (id) => {
       const category = await prisma.category.findUnique({
@@ -1920,8 +2133,28 @@ var init_public_services = __esm({
       }
       return meal;
     };
-    getAllProvider = async () => {
-      const provider = await prisma.providerProfile.findMany({
+    getAllProvider = async (query) => {
+      const { searchTerm, isAvailable, page, limit } = query;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip
+      } = paginationHelper({
+        page,
+        limit
+      });
+      const whereCondition = {};
+      if (searchTerm) {
+        whereCondition.name = {
+          contains: searchTerm,
+          mode: "insensitive"
+        };
+      }
+      if (isAvailable !== void 0 && isAvailable !== null && isAvailable !== "") {
+        whereCondition.isAvailable = isAvailable === "true";
+      }
+      const result = await prisma.providerProfile.findMany({
+        where: whereCondition,
         include: {
           meals: {
             include: {
@@ -1932,10 +2165,20 @@ var init_public_services = __esm({
               }
             }
           }
-        }
+        },
+        skip,
+        take: limitNum
       });
-      const total_provider = await prisma.providerProfile.count();
-      return { data: provider, total_provider };
+      const total = await prisma.providerProfile.count({ where: whereCondition });
+      return {
+        data: result,
+        pagination: {
+          limit: limitNum,
+          total_meal: total,
+          current_Page: pageNum,
+          totatl_page: Math.ceil(total / limitNum)
+        }
+      };
     };
     getProviderById = async (id) => {
       return await prisma.providerProfile.findUniqueOrThrow({
@@ -2106,24 +2349,6 @@ var init_public_services = __esm({
   }
 });
 
-// src/helper/paginationHelper.ts
-var paginationHelper;
-var init_paginationHelper = __esm({
-  "src/helper/paginationHelper.ts"() {
-    "use strict";
-    paginationHelper = (options) => {
-      const page = Number(options.page) || 1;
-      const limit = Number(options.limit) || 7;
-      const skip = (page - 1) * limit;
-      return {
-        page,
-        limit,
-        skip
-      };
-    };
-  }
-});
-
 // src/modules/public/public.controller.ts
 var getAllCategory2, getCategoryById2, getAllMeal2, getAllTopMeal2, getMealsById2, getAllProvider2, getProviderById2, addToCart2, getOwnCart2, getOwnCartCount2, cartDelete2, itemDelete2, publicController;
 var init_public_controller = __esm({
@@ -2133,7 +2358,7 @@ var init_public_controller = __esm({
     init_paginationHelper();
     getAllCategory2 = async (req, res) => {
       try {
-        const result = await publicServices.getAllCategory();
+        const result = await publicServices.getAllCategory(req.query);
         res.status(200).json(result);
       } catch (e) {
         res.status(404).json({
@@ -2200,7 +2425,7 @@ var init_public_controller = __esm({
     };
     getAllProvider2 = async (req, res) => {
       try {
-        const allProvider = await publicServices.getAllProvider();
+        const allProvider = await publicServices.getAllProvider(req.query);
         res.status(200).json(allProvider);
       } catch (e) {
         res.status(404).json({
@@ -2400,12 +2625,27 @@ var init_coupon_service = __esm({
     "use strict";
     init_prisma();
     create = async (payload) => {
+      const existingCoupon = await prisma.coupon.findUnique({
+        where: { code: payload.code.toUpperCase() }
+      });
+      if (existingCoupon) {
+        throw new Error("Coupon already exists");
+      }
+      const expiresAt = new Date(payload.expiresAt);
+      const now = /* @__PURE__ */ new Date();
+      if (expiresAt <= now) {
+        throw new Error("Invalid expiresAt date. It must be in the future.");
+      }
+      if (payload.discount <= 0 || payload.discount > 100) {
+        throw new Error("Invalid discount percentage. It must be between 1 and 100.");
+      }
       return await prisma.coupon.create({
         data: {
           code: payload.code.toUpperCase(),
           discount: payload.discount,
-          expiresAt: new Date(payload.expiresAt),
-          usageLimit: payload.usageLimit || null
+          expiresAt,
+          usageLimit: payload.usageLimit || null,
+          isActive: payload.isActive ?? true
         }
       });
     };
@@ -2436,7 +2676,7 @@ var init_coupon_service = __esm({
           discount: payload?.discount || coupon.discount,
           expiresAt: payload?.expiresAt ? new Date(payload.expiresAt) : coupon.expiresAt,
           usageLimit: payload?.usageLimit || coupon.usageLimit,
-          isActive: payload?.isActive || coupon.isActive
+          isActive: payload?.isActive ?? coupon.isActive
         }
       });
     };
@@ -2646,12 +2886,13 @@ var init_review_router = __esm({
 });
 
 // src/modules/foodBlogs/foodBlogs.service.ts
-var createFoodBlog, getAllFoodBlog, foodBlogsService;
+var createFoodBlog, getAllFoodBlog, updateFoodBlog, deleteFoodBlog, foodBlogsService;
 var init_foodBlogs_service = __esm({
   "src/modules/foodBlogs/foodBlogs.service.ts"() {
     "use strict";
     init_client();
     init_prisma();
+    init_paginationHelper();
     createFoodBlog = async (payload, role) => {
       if (role !== UserRole.ADMIN) {
         throw new Error("You are not authorized to create food blog");
@@ -2665,16 +2906,67 @@ var init_foodBlogs_service = __esm({
       });
       return result;
     };
-    getAllFoodBlog = async () => {
-      const result = await prisma.foodBlog.findMany();
+    getAllFoodBlog = async (query) => {
+      const { searchTerm, page, limit } = query;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip
+      } = paginationHelper({
+        page,
+        limit
+      });
+      const whereCondition = {};
+      if (searchTerm) {
+        whereCondition.title = {
+          contains: searchTerm,
+          mode: "insensitive"
+        };
+      }
+      const result = await prisma.foodBlog.findMany({
+        where: whereCondition,
+        skip,
+        take: limitNum,
+        orderBy: {
+          createdAt: "desc"
+        }
+      });
+      const total = await prisma.foodBlog.count({ where: whereCondition });
+      return {
+        meta: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPage: Math.ceil(total / limitNum)
+        },
+        data: result
+      };
+    };
+    updateFoodBlog = async (id, payload, role) => {
+      if (role !== UserRole.ADMIN) {
+        throw new Error("You are not authorized to update food blog");
+      }
+      const result = await prisma.foodBlog.update({
+        where: { id },
+        data: payload
+      });
       return result;
     };
-    foodBlogsService = { createFoodBlog, getAllFoodBlog };
+    deleteFoodBlog = async (id, role) => {
+      if (role !== UserRole.ADMIN) {
+        throw new Error("You are not authorized to delete food blog");
+      }
+      const result = await prisma.foodBlog.delete({
+        where: { id }
+      });
+      return result;
+    };
+    foodBlogsService = { createFoodBlog, getAllFoodBlog, updateFoodBlog, deleteFoodBlog };
   }
 });
 
 // src/modules/foodBlogs/foodBlogs.controller.ts
-var createFoodBlog2, getAllFoodBlog2, foodBlogsController;
+var createFoodBlog2, getAllFoodBlog2, updateFoodBlog2, deleteFoodBlog2, foodBlogsController;
 var init_foodBlogs_controller = __esm({
   "src/modules/foodBlogs/foodBlogs.controller.ts"() {
     "use strict";
@@ -2699,7 +2991,7 @@ var init_foodBlogs_controller = __esm({
     };
     getAllFoodBlog2 = async (req, res) => {
       try {
-        const result = await foodBlogsService.getAllFoodBlog();
+        const result = await foodBlogsService.getAllFoodBlog(req.query);
         res.status(200).json({
           success: true,
           message: "Food blog fetched successfully",
@@ -2713,7 +3005,44 @@ var init_foodBlogs_controller = __esm({
         });
       }
     };
-    foodBlogsController = { createFoodBlog: createFoodBlog2, getAllFoodBlog: getAllFoodBlog2 };
+    updateFoodBlog2 = async (req, res) => {
+      const { id } = req.params;
+      const payload = req.body;
+      const role = req.user?.role;
+      try {
+        const result = await foodBlogsService.updateFoodBlog(id, payload, role);
+        res.status(200).json({
+          success: true,
+          message: "Food blog updated successfully",
+          data: result
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: "Failed to update food blog",
+          error
+        });
+      }
+    };
+    deleteFoodBlog2 = async (req, res) => {
+      const { id } = req.params;
+      const role = req.user?.role;
+      try {
+        const result = await foodBlogsService.deleteFoodBlog(id, role);
+        res.status(200).json({
+          success: true,
+          message: "Food blog deleted successfully",
+          data: result
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: "Failed to delete food blog",
+          error
+        });
+      }
+    };
+    foodBlogsController = { createFoodBlog: createFoodBlog2, getAllFoodBlog: getAllFoodBlog2, updateFoodBlog: updateFoodBlog2, deleteFoodBlog: deleteFoodBlog2 };
   }
 });
 
@@ -2729,6 +3058,8 @@ var init_foodBlogs_router = __esm({
     router9 = Router9();
     router9.post("/create", auth_middleware_default(UserRole.ADMIN), foodBlogsController.createFoodBlog);
     router9.get("/", foodBlogsController.getAllFoodBlog);
+    router9.patch("/:id", auth_middleware_default(UserRole.ADMIN), foodBlogsController.updateFoodBlog);
+    router9.delete("/:id", auth_middleware_default(UserRole.ADMIN), foodBlogsController.deleteFoodBlog);
     foodBlogsRouter = router9;
   }
 });

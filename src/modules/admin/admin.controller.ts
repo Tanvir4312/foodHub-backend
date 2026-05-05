@@ -4,7 +4,7 @@ import { paginationHelper } from "../../helper/paginationHelper";
 
 const getAllUser = async (req: Request, res: Response) => {
   try {
-    const result = await adminServices.getAllUser();
+    const result = await adminServices.getAllUser(req.query);
     res.status(200).json(result);
   } catch (e: any) {
     res.status(404).json({
@@ -80,7 +80,7 @@ const deleteCategories = async (
 
 const getAllOrder = async (req: Request, res: Response) => {
   try {
-    const result = await adminServices.getAllOrder();
+    const result = await adminServices.getAllOrder(req.query);
     res.status(200).json(result);
   } catch (e: any) {
     res.status(404).json({

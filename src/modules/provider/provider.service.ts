@@ -1,11 +1,10 @@
-import { connect } from "node:http2";
 import {
   DietaryPreference,
   Meal,
   ProviderProfile,
 } from "../../../generated/prisma/client";
-
 import { prisma } from "../../lib/prisma";
+import { paginationHelper } from "../../helper/paginationHelper";
 
 // ------Provider-------
 const createProviderProfile = async (
@@ -52,7 +51,10 @@ const updateProviderOwnProfile = async (
 
 // ------Meals-------------
 
-const getProviderOwnMeals = async (userId: string) => {
+const getProviderOwnMeals = async (userId: string, query: Record<string, any>) => {
+  const { searchTerm, isAvailable, page, limit } = query;
+  const { page: pageNum, limit: limitNum, skip } = paginationHelper({ page, limit });
+
   return await prisma.$transaction(async (tx) => {
     const provider = await tx.providerProfile.findUniqueOrThrow({
       where: {
@@ -65,19 +67,55 @@ const getProviderOwnMeals = async (userId: string) => {
       throw new Error("Provider Not Found!!");
     }
 
-    return await tx.meal.findMany({
-      where: {
-        provider_id: providerId,
-      },
-      include: {
-        reviews: {
-          select: {
-            rating: true,
-            comment: true,
+    const where: any = {
+      provider_id: providerId,
+    };
+
+    // Filter out deleted items (handle null/undefined as well)
+    where.NOT = {
+      isDeleted: true
+    };
+
+    if (searchTerm) {
+      where.OR = [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { description: { contains: searchTerm, mode: "insensitive" } },
+      ];
+    }
+
+    if (isAvailable !== undefined && isAvailable !== "" && isAvailable !== "all") {
+      where.isAvailable = isAvailable === "true";
+    }
+
+    const [data, total] = await Promise.all([
+      tx.meal.findMany({
+        where,
+        skip,
+        take: limitNum,
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+              comment: true,
+            },
           },
         },
+        orderBy: {
+          id: "desc",
+        },
+      }),
+      tx.meal.count({ where }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        current_Page: pageNum,
+        limit: limitNum,
+        total_meal: total,
+        totatl_page: Math.ceil(total / limitNum),
       },
-    });
+    };
   });
 };
 
@@ -98,12 +136,12 @@ const createMeals = async (
         user_id: userId,
       },
     });
-    
-        if (!provider) {
-          throw new Error(
-            "Provider profile not found. Please complete your provider profile first.",
-          );
-        }
+
+    if (!provider) {
+      throw new Error(
+        "Provider profile not found. Please complete your provider profile first.",
+      );
+    }
 
     const providerId = provider?.id;
 

@@ -53,6 +53,7 @@ const getProviderOwnMeals = async (req: Request, res: Response) => {
   try {
     const providerOwnMeal = await providerServices.getProviderOwnMeals(
       userId as string,
+      req.query
     );
     res.status(200).json(providerOwnMeal);
   } catch (e: any) {

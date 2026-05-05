@@ -1,11 +1,46 @@
 import { MealWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
+import { Prisma } from "../../../generated/prisma/client";
+import { paginationHelper } from "../../helper/paginationHelper";
 
 // Cattegory
-const getAllCategory = async () => {
-  const allCategory = await prisma.category.findMany();
-  const totalCategory = await prisma.category.count();
-  return { data: allCategory, totalCategory };
+const getAllCategory = async (query: Record<string, unknown>) => {
+  const { searchTerm, page, limit } = query;
+  const {
+    page: pageNum,
+    limit: limitNum,
+    skip,
+  } = paginationHelper({
+    page: page as string,
+    limit: limit as string,
+  });
+
+  const whereCondition: Prisma.CategoryWhereInput = {};
+
+  if (searchTerm) {
+    whereCondition.name = {
+      contains: searchTerm as string,
+      mode: "insensitive",
+    };
+  }
+
+  const result = await prisma.category.findMany({
+    where: whereCondition,
+    skip,
+    take: limitNum,
+  });
+
+  const total = await prisma.category.count({ where: whereCondition });
+
+  return {
+    meta: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPage: Math.ceil(total / limitNum),
+    },
+    data: result,
+  };
 };
 
 const getCategoryById = async (id: string) => {
@@ -179,8 +214,32 @@ const getMealsById = async (id: string) => {
 };
 
 // Provider
-const getAllProvider = async () => {
-  const provider = await prisma.providerProfile.findMany({
+const getAllProvider = async (query: Record<string, unknown>) => {
+  const { searchTerm, isAvailable, page, limit } = query;
+  const {
+    page: pageNum,
+    limit: limitNum,
+    skip,
+  } = paginationHelper({
+    page: page as string,
+    limit: limit as string,
+  });
+
+  const whereCondition: Prisma.ProviderProfileWhereInput = {};
+
+  if (searchTerm) {
+    whereCondition.name = {
+      contains: searchTerm as string,
+      mode: "insensitive",
+    };
+  }
+
+  if (isAvailable !== undefined && isAvailable !== null && isAvailable !== "") {
+    whereCondition.isAvailable = isAvailable === "true";
+  }
+
+  const result = await prisma.providerProfile.findMany({
+    where: whereCondition,
     include: {
       meals: {
         include: {
@@ -192,10 +251,21 @@ const getAllProvider = async () => {
         },
       },
     },
+    skip,
+    take: limitNum,
   });
-  const total_provider = await prisma.providerProfile.count();
 
-  return { data: provider, total_provider };
+  const total = await prisma.providerProfile.count({ where: whereCondition });
+
+  return {
+    data: result,
+    pagination: {
+      limit: limitNum,
+      total_meal: total,
+      current_Page: pageNum,
+      totatl_page: Math.ceil(total / limitNum),
+    },
+  };
 };
 
 const getProviderById = async (id: string) => {

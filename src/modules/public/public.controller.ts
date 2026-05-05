@@ -6,7 +6,7 @@ import { number } from "better-auth";
 // Category
 const getAllCategory = async (req: Request, res: Response) => {
   try {
-    const result = await publicServices.getAllCategory();
+    const result = await publicServices.getAllCategory(req.query);
     res.status(200).json(result);
   } catch (e: any) {
     res.status(404).json({
@@ -84,7 +84,7 @@ const getMealsById = async (req: Request, res: Response) => {
 // Provider
 const getAllProvider = async (req: Request, res: Response) => {
   try {
-    const allProvider = await publicServices.getAllProvider();
+    const allProvider = await publicServices.getAllProvider(req.query);
     res.status(200).json(allProvider);
   } catch (e) {
     res.status(404).json({

@@ -3,16 +3,72 @@ import {
   Category,
   OrderStatus,
   UserStatus,
+  UserRole,
 } from "../../../generated/prisma/client";
+import { paginationHelper } from "../../helper/paginationHelper";
+import { Prisma } from "../../../generated/prisma/client";
 
 // ----------User-------------
-const getAllUser = async () => {
-  const allUser = await prisma.user.findMany({
+const getAllUser = async (params: {
+  searchTerm?: string;
+  role?: string;
+  status?: string;
+  page?: number | string;
+  limit?: number | string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}) => {
+  const { searchTerm, role, status, sortBy, sortOrder } = params;
+  const { page, limit, skip } = paginationHelper({
+    page: params.page,
+    limit: params.limit,
+  });
+
+  const andCondition: Prisma.UserWhereInput[] = [];
+
+  if (searchTerm) {
+    andCondition.push({
+      OR: [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (role) {
+    andCondition.push({ role: role as UserRole });
+  }
+
+  if (status) {
+    andCondition.push({ status: status as UserStatus });
+  }
+
+  const whereCondition: Prisma.UserWhereInput =
+    andCondition.length > 0 ? { AND: andCondition } : {};
+
+  const result = await prisma.user.findMany({
+    where: whereCondition,
     include: {
       providerProfile: true,
     },
+    skip,
+    take: limit,
+    orderBy: sortBy
+      ? { [sortBy]: sortOrder || "asc" }
+      : { createdAt: (sortOrder as "asc" | "desc") || "desc" },
   });
-  return allUser;
+
+  const total = await prisma.user.count({ where: whereCondition });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
 const updateUserStatus = async (id: string, status: UserStatus) => {
@@ -59,8 +115,34 @@ const deleteCategory = async (id: string) => {
 };
 
 // ----------Orders-----------
-const getAllOrder = async () => {
-  const allUser = await prisma.order.findMany({
+const getAllOrder = async (query: Record<string, unknown>) => {
+  const { searchTerm, status, page, limit, sortBy, sortOrder } = query;
+  const {
+    page: pageNum,
+    limit: limitNum,
+    skip,
+  } = paginationHelper({
+    page: page as string,
+    limit: limit as string,
+  });
+
+  const whereCondition: Prisma.OrderWhereInput = {};
+
+  if (searchTerm) {
+    whereCondition.provider = {
+      name: {
+        contains: searchTerm as string,
+        mode: "insensitive",
+      },
+    };
+  }
+
+  if (status && status !== "all") {
+    whereCondition.status = status as OrderStatus;
+  }
+
+  const result = await prisma.order.findMany({
+    where: whereCondition,
     include: {
       provider: {
         select: {
@@ -80,8 +162,24 @@ const getAllOrder = async () => {
         },
       },
     },
+    skip,
+    take: limitNum,
+    orderBy: sortBy
+      ? { [sortBy as string]: (sortOrder as string) || "asc" }
+      : { createdAt: (sortOrder as "asc" | "desc") || "desc" },
   });
-  return allUser;
+
+  const total = await prisma.order.count({ where: whereCondition });
+
+  return {
+    meta: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPage: Math.ceil(total / limitNum),
+    },
+    data: result,
+  };
 };
 
 const updateOrderStatus = async (id: string, status: OrderStatus) => {

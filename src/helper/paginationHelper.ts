@@ -1,6 +1,6 @@
 interface PaginationOptions {
-  page?: number | string;
-  limit?: number | string;
+  page?: number | string | undefined;
+  limit?: number | string | undefined;
 }
 interface Options {
   page: number;

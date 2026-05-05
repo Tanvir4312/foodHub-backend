@@ -5,13 +5,30 @@ const create = async (payload: {
     discount: number;
     expiresAt: string;
     usageLimit?: number;
+    isActive?: boolean;
 }) => {
+    const existingCoupon = await prisma.coupon.findUnique({
+        where: { code: payload.code.toUpperCase() },
+    });
+    if (existingCoupon) {
+        throw new Error("Coupon already exists");
+    }
+    const expiresAt = new Date(payload.expiresAt);
+    const now = new Date();
+
+    if (expiresAt <= now) {
+        throw new Error("Invalid expiresAt date. It must be in the future.");
+    }
+    if (payload.discount <= 0 || payload.discount > 100) {
+        throw new Error("Invalid discount percentage. It must be between 1 and 100.");
+    }
     return await prisma.coupon.create({
         data: {
             code: payload.code.toUpperCase(),
             discount: payload.discount,
-            expiresAt: new Date(payload.expiresAt),
+            expiresAt: expiresAt,
             usageLimit: payload.usageLimit || null,
+            isActive: payload.isActive ?? true,
         },
     });
 };
@@ -46,6 +63,9 @@ const update = async (id: string, payload: {
 }) => {
     const coupon = await prisma.coupon.findUnique({ where: { id } });
     if (!coupon) throw new Error("Coupon not found");
+
+
+
     return await prisma.coupon.update({
         where: { id },
         data: {
@@ -53,7 +73,7 @@ const update = async (id: string, payload: {
             discount: payload?.discount || coupon.discount,
             expiresAt: payload?.expiresAt ? new Date(payload.expiresAt) : coupon.expiresAt,
             usageLimit: payload?.usageLimit || coupon.usageLimit,
-            isActive: payload?.isActive || coupon.isActive,
+            isActive: payload?.isActive ?? coupon.isActive,
         },
     });
 };

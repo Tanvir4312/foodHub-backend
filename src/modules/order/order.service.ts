@@ -1,5 +1,6 @@
 import { OrderStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
+import { paginationHelper } from "../../helper/paginationHelper";
 
 type OrderPlace = {
   delivery_address: string;
@@ -28,6 +29,10 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
     );
   }
 
+  if (user?.role === "PROVIDER") {
+    throw new Error("Provider not allowed to order");
+  }
+
   // coupon দিলে আগেই validate করো — transaction এর বাইরে
   // কারণ invalid coupon হলে order create ই হবে না
   let discountPercent = 0;
@@ -48,7 +53,7 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
   }
 
   const mealIds = items.map((item) => item.mealId).filter(Boolean);
-  
+
   if (mealIds.length === 0) {
     throw new Error("Please add at least one valid item to your order");
   }
@@ -125,11 +130,27 @@ const createOrder = async (payload: OrderPlace, userId: string) => {
   });
 };
 
-const getUserOwnOrder = async (userId: string) => {
-  return await prisma.order.findMany({
-    where: {
-      user_id: userId,
-    },
+const getUserOwnOrder = async (userId: string, query: Record<string, any>) => {
+  const { status, sortOrder, page, limit } = query;
+  const {
+    page: pageNum,
+    limit: limitNum,
+    skip,
+  } = paginationHelper({
+    page: page as string,
+    limit: (limit as string) || "5",
+  });
+
+  const whereCondition: any = {
+    user_id: userId,
+  };
+
+  if (status && status !== "all") {
+    whereCondition.status = status;
+  }
+
+  const result = await prisma.order.findMany({
+    where: whereCondition,
     include: {
       orderItems: {
         include: {
@@ -137,13 +158,30 @@ const getUserOwnOrder = async (userId: string) => {
             select: {
               name: true,
               price: true,
-              image_url: true
+              image_url: true,
             },
           },
         },
       },
     },
+    orderBy: {
+      createdAt: sortOrder === "asc" ? "asc" : "desc",
+    },
+    skip,
+    take: limitNum,
   });
+
+  const total = await prisma.order.count({ where: whereCondition });
+
+  return {
+    data: result,
+    pagination: {
+      limit: limitNum,
+      total_meal: total,
+      current_Page: pageNum,
+      totatl_page: Math.ceil(total / limitNum),
+    },
+  };
 };
 
 const getOrderById = async (orderId: string) => {
@@ -167,7 +205,17 @@ const getOrderById = async (orderId: string) => {
   });
 };
 
-const getIncomingOrder = async (userId: string) => {
+const getIncomingOrder = async (userId: string, query: Record<string, any>) => {
+  const { status, sortOrder, page, limit } = query;
+  const {
+    page: pageNum,
+    limit: limitNum,
+    skip,
+  } = paginationHelper({
+    page: page as string,
+    limit: (limit as string) || "5",
+  });
+
   return await prisma.$transaction(async (tx) => {
     const provider = await tx.providerProfile.findUnique({
       where: {
@@ -176,19 +224,21 @@ const getIncomingOrder = async (userId: string) => {
     });
 
     if (!provider) {
-      return [];
+      return { data: [], pagination: { limit: limitNum, total_meal: 0, current_Page: pageNum, totatl_page: 1 } };
     }
 
-    const providerId = provider?.id;
+    const providerId = provider.id;
 
-    if (!providerId) {
-      throw new Error("Provider not found");
+    const whereCondition: any = {
+      provider_id: providerId,
+    };
+
+    if (status && status !== "all") {
+      whereCondition.status = status;
     }
 
-    return await tx.order.findMany({
-      where: {
-        provider_id: providerId,
-      },
+    const result = await tx.order.findMany({
+      where: whereCondition,
       include: {
         orderItems: {
           include: {
@@ -206,7 +256,24 @@ const getIncomingOrder = async (userId: string) => {
           },
         },
       },
+      orderBy: {
+        createdAt: sortOrder === "asc" ? "asc" : "desc",
+      },
+      skip,
+      take: limitNum,
     });
+
+    const total = await tx.order.count({ where: whereCondition });
+
+    return {
+      data: result,
+      pagination: {
+        limit: limitNum,
+        total_meal: total,
+        current_Page: pageNum,
+        totatl_page: Math.ceil(total / limitNum),
+      },
+    };
   });
 };
 

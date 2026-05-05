@@ -22,7 +22,10 @@ const getUserOwnOrder = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
   try {
-    const order = await orderServices.getUserOwnOrder(userId as string);
+    const order = await orderServices.getUserOwnOrder(
+      userId as string,
+      req.query,
+    );
 
     res.status(200).json(order);
   } catch (e: any) {
@@ -50,7 +53,10 @@ const getIncomingOrder = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
   try {
-    const order = await orderServices.getIncomingOrder(userId as string);
+    const order = await orderServices.getIncomingOrder(
+      userId as string,
+      req.query,
+    );
 
     res.status(200).json(order);
   } catch (e: any) {
